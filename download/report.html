@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير مقارنة مشاريع مراقبة الشبكات عبر بوتات Telegram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm 20mm 18mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans Arabic', 'DejaVu Sans', sans-serif;
+    font-size: 11pt;
+    line-height: 1.8;
+    color: #1a1a2e;
+    background: #ffffff;
+    direction: rtl;
+    text-align: right;
+  }
+
+  /* Cover Page */
+  .cover-page {
+    page-break-after: always;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+    color: #ffffff;
+    padding: 40px;
+  }
+  .cover-page h1 {
+    font-size: 32pt;
+    font-weight: 800;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    letter-spacing: 1px;
+  }
+  .cover-page .subtitle {
+    font-size: 16pt;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-bottom: 40px;
+    max-width: 600px;
+  }
+  .cover-page .meta {
+    font-size: 11pt;
+    opacity: 0.6;
+    margin-top: 40px;
+  }
+  .cover-line {
+    width: 120px;
+    height: 3px;
+    background: #3b82f6;
+    margin: 30px auto;
+    border-radius: 2px;
+  }
+
+  /* TOC */
+  .toc-page {
+    page-break-after: always;
+    padding-top: 20px;
+  }
+  .toc-page h2 {
+    font-size: 20pt;
+    color: #1e3a5f;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+  }
+  .toc-list {
+    list-style: none;
+    padding: 0;
+  }
+  .toc-list li {
+    padding: 8px 0;
+    border-bottom: 1px dotted #ccc;
+    font-size: 12pt;
+  }
+  .toc-list li a {
+    text-decoration: none;
+    color: #1e3a5f;
+  }
+  .toc-list li .toc-num {
+    font-weight: 700;
+    color: #3b82f6;
+    margin-left: 8px;
+  }
+
+  /* Content sections */
+  h2 {
+    font-size: 18pt;
+    color: #1e3a5f;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 8px;
+    margin-top: 40px;
+    margin-bottom: 15px;
+  }
+  h3 {
+    font-size: 14pt;
+    color: #2563eb;
+    margin-top: 25px;
+    margin-bottom: 10px;
+    padding-right: 12px;
+    border-right: 4px solid #3b82f6;
+  }
+  h4 {
+    font-size: 12pt;
+    color: #1e40af;
+    margin-top: 18px;
+    margin-bottom: 8px;
+  }
+  p {
+    margin-bottom: 10px;
+    text-align: justify;
+  }
+  ul {
+    padding-right: 25px;
+    margin-bottom: 12px;
+  }
+  ul li {
+    margin-bottom: 5px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0 20px 0;
+    font-size: 10pt;
+    overflow-wrap: break-word;
+  }
+  table th {
+    background: #1e3a5f;
+    color: #ffffff;
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 9.5pt;
+  }
+  table td {
+    padding: 8px 6px;
+    text-align: center;
+    border: 1px solid #d1d5db;
+    font-size: 9.5pt;
+    vertical-align: top;
+  }
+  table tr:nth-child(even) {
+    background: #f0f4ff;
+  }
+  table tr:hover {
+    background: #e0e7ff;
+  }
+
+  /* Project section styling */
+  .project-section {
+    page-break-inside: avoid;
+    margin-bottom: 10px;
+  }
+  .project-header {
+    background: linear-gradient(to left, #1e3a5f, #2563eb);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px 8px 0 0;
+    margin-top: 30px;
+  }
+  .project-header h2 {
+    color: white;
+    border: none;
+    margin: 0;
+    padding: 0;
+    font-size: 16pt;
+  }
+  .project-header .project-link {
+    color: #93c5fd;
+    font-size: 10pt;
+    direction: ltr;
+    text-align: left;
+    display: block;
+    margin-top: 5px;
+  }
+  .project-body {
+    border: 1px solid #d1d5db;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 15px 20px;
+    background: #fafbfc;
+  }
+
+  /* Badge styles */
+  .badge-yes {
+    background: #dcfce7;
+    color: #166534;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 9pt;
+  }
+  .badge-no {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 9pt;
+  }
+  .badge-partial {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 9pt;
+  }
+
+  /* Comparison table special */
+  .comparison-table th {
+    font-size: 8.5pt;
+    padding: 8px 4px;
+  }
+  .comparison-table td {
+    font-size: 8.5pt;
+    padding: 6px 4px;
+  }
+
+  /* Final section */
+  .final-section {
+    page-break-before: always;
+  }
+
+  a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .highlight-box {
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 15px 0;
+  }
+  .warning-box {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 15px 0;
+  }
+  .success-box {
+    background: #dcfce7;
+    border: 1px solid #22c55e;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin: 15px 0;
+  }
+
+  @media print {
+    .cover-page { min-height: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <h1>تقرير مقارنة شامل<br>مشاريع مراقبة وإدارة الشبكات<br>عبر بوتات Telegram</h1>
+  <div class="cover-line"></div>
+  <div class="subtitle">تحليل مفصّل لثمانية مشاريع مفتوحة المصدر مع جدول مقارنة نهائي وتوصيات لشبكات Starlink</div>
+  <div class="meta">يونيو 2026 &mdash; إعداد: Z.ai</div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc-page">
+  <h2>فهرس المحتويات</h2>
+  <ul class="toc-list">
+    <li><span class="toc-num">1</span> المشروع الأول: TLGRM Script (Mikrotik-Bot-Telegram)</li>
+    <li><span class="toc-num">2</span> المشروع الثاني: luci-app-telemt</li>
+    <li><span class="toc-num">3</span> المشروع الثالث: Dynamic-IP-Tracker</li>
+    <li><span class="toc-num">4</span> المشروع الرابع: RouterOS Scripts Collection</li>
+    <li><span class="toc-num">5</span> المشروع الخامس: luci-app-trafficctl</li>
+    <li><span class="toc-num">6</span> المشروع السادس: MickroTikBot (Java)</li>
+    <li><span class="toc-num">7</span> المشروع السابع: DroidNet Sentinel</li>
+    <li><span class="toc-num">8</span> المشروع الثامن: NetAlertX</li>
+    <li><span class="toc-num">9</span> جدول المقارنة النهائي</li>
+    <li><span class="toc-num">10</span> الأسئلة الختامية والتوصيات</li>
+  </ul>
+</div>
+
+<!-- ==================== PROJECT 1 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>1. TLGRM Script (Mikrotik-Bot-Telegram)</h2>
+    <a class="project-link" href="https://github.com/pantigon/Mikrotik-Bot-Telegram" target="_blank">https://github.com/pantigon/Mikrotik-Bot-Telegram</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>TLGRM Script هو سكربت مكتوب بلغة RouterOS الأصلية يعمل مباشرةً داخل راوتر MikroTik بدون الحاجة لأي جهاز خارجي أو خادم إضافي. يقدم السكربت قدرتين أساسيتين: الأولى هي إعادة توجيه سجلات النظام (Logs) المهمة من الراوتر إلى مجموعة Telegram في الوقت الفعلي، والثانية هي تنفيذ أوامر عن بُعد على الراوتر عبر إرسال رسائل Telegram. السكربت مدعوم على RouterOS 6.49+ و7.12+، ويستهدف بشكل رئيسي المستخدمين المنزليين والشركات الصغيرة الذين يمتلكون راوتر MikroTik ويرغبون في مراقبة شبكتهم والتحكم بها من خلال الهاتف المحمول.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>إعادة توجيه السجلات:</strong> يراقب سجلات RouterOS (تحذيرات، أخطاء، حرائق، DHCP، اللاسلكي، الجدار الناري) ويرسلها فوراً إلى Telegram.</li>
+      <li><strong>دعم الأحرف السيريلية:</strong> تحويل كامل من CP1251 إلى UTF-8 للرسائل الروسية.</li>
+      <li><strong>الصمود أمام انقطاع الإنترنت:</strong> يقوم بتخزين الرسائل المعلقة وإرسالها عند عودة الاتصال.</li>
+      <li><strong>دعم عدة راوترات:</strong> يمكن لعدة أجهزة MikroTik مشاركة نفس مجموعة Telegram، وكل جهاز يستجيب فقط للأوامر الموجهة إليه بالاسم أو عبر <code>forall</code>.</li>
+      <li><strong>إثراء عناوين MAC:</strong> عند ظهور MAC في السجلات، يربطه تلقائياً باسم الجهاز وعنوان IP من DHCP.</li>
+      <li><strong>إشعارات العملاء اللاسلكيين:</strong> إرسال تنبيهات عند اتصال أو انفصال أجهزة WiFi، خصوصاً الأجهزة غير المعروفة.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <p>لا يوجد أوامر ثابتة مسبقاً. يستخدم نظام أوامر مخصص عبر BotFather بصيغة <code>/&lt;معرف_الجهاز&gt;_&lt;الأمر&gt;</code>. أمثلة:</p>
+    <ul>
+      <li><code>/mikrotik system reboot</code> &mdash; إعادة تشغيل الراوتر</li>
+      <li><code>/forall log warning [/system resource get uptime]</code> &mdash; طلب وقت التشغيل من كل الراوترات</li>
+      <li><code>/mikrotik1_wol</code> &mdash; تنفيذ سكربت Wake-on-LAN</li>
+    </ul>
+    <p>ثلاثة أنواع تنفيذ: دوال عامة (launchFnc)، سكربتات (launchScr)، أوامر خام (launchCmd). <strong>لا توجد أزرار تفاعلية (Inline Buttons).</strong></p>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> صلاحيات كاملة (Full Admin) عند تفعيل launchCmd، بالإضافة إلى صلاحية /tool fetch للاتصال بـ Telegram API، وقراءة السجلات وجداول DHCP واللاسلكي.</li>
+      <li><strong>على الجهاز المضيف:</strong> لا يحتاج أي جهاز خارجي &mdash; السكربت يعمل بالكامل داخل الراوتر.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> راوتر MikroTik يعمل بـ RouterOS 6.49+ أو 7.12+ فقط.</li>
+      <li><strong>البرامج:</strong> لا يحتاج Python أو Docker أو أي بيئة خارجية &mdash; سكربت .rsc واحد فقط.</li>
+      <li><strong>خطوات التثبيت:</strong> إنشاء بوت Telegram عبر BotFather &rarr; نسخ السكربت إلى WinBox &rarr; ضبط المتغيرات (botID, myChatID, broadCast) &rarr; إنشاء جدول زمني (Scheduler) لتشغيله كل دقيقة &rarr; تسجيل الأوامر في BotFather.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th><th>التفاصيل</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-yes">نعم</span></td><td>عبر launchCmd بإضافة قواعد جدار ناري مثل <code>ip firewall filter add chain=forward src-mac=XX action=drop</code></td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-yes">نعم</span></td><td>عبر launchCmd بإنشاء Simple Queue مثل <code>queue simple add name=device target=IP max-limit=1M/1M</code></td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-partial">محدود</span></td><td>يكشف أجهزة DHCP واللاسلكي الجديدة لكن بدورية المجدول (حوالي دقيقة)، وليس لحظياً</td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-no">لا</span></td><td>لا يوجد مراقبة مدمجة للاستهلاك لكل جهاز (يمكن الاستعلام يدوياً عبر أوامر)</td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-yes">نعم</span></td><td>عبر <code>/mikrotik system reboot</code> &mdash; مثال مذكور في التوثيق</td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p><strong>لا يعمل مباشرة مع راوتر Starlink الأصلي</strong> لأن السكربت مخصص لـ MikroTik RouterOS فقط. المطلوب: تفعيل وضع Bypass Mode على Starlink وربط راوتر MikroTik كراوتر رئيسي خلف طبق Starlink، ثم تشغيل TLGRM على MikroTik.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>متوسط</td></tr>
+      <tr><td>التقييم العام</td><td><strong>6/10</strong></td></tr>
+    </table>
+    <div class="warning-box"><strong>تحذير أمني:</strong> تفعيل launchCmd يسمح بتنفيذ أي أمر من Telegram بدون مصادقة إضافية. أي عضو في المجموعة يمكنه إعادة تشغيل الراوتر أو تغيير قواعد الجدار الناري.</div>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 2 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>2. luci-app-telemt (مع Telegram Bot)</h2>
+    <a class="project-link" href="https://github.com/Medvedolog/luci-app-telemt" target="_blank">https://github.com/Medvedolog/luci-app-telemt</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>luci-app-telemt هو تطبيق LuCI لـ OpenWrt مخصص لإدارة بروكسي Telemt MTProto &mdash; وهو خادم بروكسي عالي الأداء مكتوب بلغة Rust يتيح لمستخدمي Telegram تجاوز الرقابة والقيود الشبكية. يوفر النظام لوحة تحكم ويب كاملة، وإدارة دورة حياة الخدمة، وبوت Telegram مدمج للإدارة عن بُعد من الهاتف. <strong>هذا المشروع ليس أداة إدارة شبكة عامة</strong>، بل هو مدير بروكسي MTProto متخصص يتحكم في من يمكنه استخدام البروكسي وكمية البيانات المسموح بها.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>استضافة بروكسي MTProto:</strong> تشغيل خادم Telemt Rust كبروكسي كامل على الراوتر.</li>
+      <li><strong>إعادة تحميل بدون توقف:</strong> إضافة/إزالة مستخدمين وتغيير حصص البيانات بدون قطع الاتصالات النشطة.</li>
+      <li><strong>إدارة المستخدمين:</strong> إنشاء، تجميد، حذف المستخدمين مع حصص بيانات فردية وتواريخ انتهاء صلاحية.</li>
+      <li><strong>تخفي DPI:</strong> ميزة Self-Stealth لإخفاء حركة البروكسي كحركة TLS عادية.</li>
+      <li><strong>توليد FakeTLS ورموز QR:</strong> إنشاء روابط بروكسي مقنّعة ورموز QR لمشاركتها.</li>
+      <li><strong>تتالي SOCKS5/Shadowsocks:</strong> توجيه حركة البروكسي عبر خوادم وسيطة.</li>
+      <li><strong>بوت Telegram:</strong> يعمل كخدمة procd مستقلة، مكتوب بـ POSIX sh فقط (3-5 ميجابايت RAM)، مع فشل ثلاثي الطبقات للاتصال.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <ul>
+      <li><code>/start</code> و<code>/menu</code> &mdash; القائمة الرئيسية مع لوحة مفاتيح تفاعلية</li>
+      <li><code>/status</code> &mdash; حالة النظام والاتصال والنسخة</li>
+      <li><code>/users</code> &mdash; قائمة المستخدمين مع أزرار إدارة</li>
+      <li><code>/upstreams</code> &mdash; إدارة البروكسيات الوسيطة</li>
+      <li><strong>أزرار تفاعلية (Inline Buttons):</strong> تجميد/إلغاء تجميد مستخدم، تعديل حصة البيانات، حذف، تعطيل جميع Upstreams، تبديل Middle Proxy، تحديث، رجوع.</li>
+    </ul>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> صلاحيات Root/Full Access لتثبيت الحزم، كتابة إعدادات UCI، إدارة خدمات procd، وحقن قواعد الجدار الناري.</li>
+      <li><strong>على الجهاز المضيف:</strong> تطبيق Telegram فقط &mdash; لا صلاحيات خاصة مطلوبة.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> أي راوتر OpenWrt (MIPS, ARM, x86, aarch64) بحد أدنى 64 ميجابايت RAM وIP عام.</li>
+      <li><strong>البرامج:</strong> حزم luCI-base, ca-bundle, qrencode, curl, jsonfilter, والثنائي telemt_wrt منفصلاً.</li>
+      <li><strong>خطوات التثبيت:</strong> تثبيت محرك telemt_wrt الأساسي &rarr; تثبيت حزمة luci-app-telemt (opkg/apk) &rarr; تثبيت حزمة telemt-bot اختيارياً &rarr; ضبط bot_token وbot_chat_id في UCI &rarr; تشغيل الخدمة.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th><th>التفاصيل</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-no">لا</span></td><td>يحظر مستخدمي البروكسي فقط وليس أجهزة الشبكة العامة</td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-partial">محدود</span></td><td>حصص بيانات لكل مستخدم بروكسي فقط، وليس تحديد سرعة لكل جهاز شبكة</td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-no">لا</span></td><td>لا يكتشف أجهزة الشبكة &mdash; يراقب مستخدمي البروكسي فقط</td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-partial">محدود</span></td><td>مراقبة حركة البروكسي لكل مستخدم فقط</td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-no">لا</span></td><td>يمكنه إعادة تشغيل خدمة telemt فقط وليس الراوتر</td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p><strong>غير متوافق بشكل مباشر</strong> لأنه يحتاج IP عام لاستقبال اتصالات Telegram الواردة. Starlink يستخدم CGNAT في معظم المناطق، مما يمنع الاتصالات الواردة. يمكن التغلب عبر SOCKS5/Shadowsocks cascade أو PROXY protocol عبر VPS خارجي.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>متوسط</td></tr>
+      <tr><td>التقييم العام</td><td><strong>7/10</strong> (متميز كمدير بروكسي MTProto لكنه ليس أداة إدارة شبكة عامة)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 3 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>3. Dynamic-IP-Tracker</h2>
+    <a class="project-link" href="https://github.com/v019f1n9er/Dynamic-IP-Tracker" target="_blank">https://github.com/v019f1n9er/Dynamic-IP-Tracker</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>Dynamic-IP-Tracker هو سكربت خفيف جداً لـ MikroTik RouterOS يقوم بمهمتين محددتين فقط: مراقبة تغيّرات عنوان IP العام للراوتر وإرسال إشعار عبر Telegram عند التغيير، بالإضافة إلى تحديث قواعد NAT (dst-nat) تلقائياً لتعكس عنوان IP الجديد. مصمم خصيصاً للمستخدمين الذين يحصلون على IP ديناميكي من مزود الخدمة ويحتاجون إلى توجيه المنافذ (Port Forwarding) ليعمل بشكل موثوق رغم تغير الـ IP.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>مراقبة IP العام:</strong> فحص دوري لعنوان IP على واجهة WAN.</li>
+      <li><strong>إشعار Telegram:</strong> إرسال رسالة "New public IP: x.x.x.x" عند التغيير.</li>
+      <li><strong>تحديث NAT تلقائي:</strong> تعديل حقل dst-address في قاعدة NAT المحددة بتعليق (comment).</li>
+      <li><strong>تنفيذ مجدول:</strong> يعمل عبر Scheduler كل 5 دقائق (قابل للتعديل).</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <p><strong>لا توجد أي أوامر أو أزرار تفاعلية.</strong> النظام أحادي الاتجاه (إشعارات فقط) بدون استقبال أوامر.</p>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> صلاحيات read, write, test, sniff, policy في Scheduler.</li>
+      <li><strong>على الجهاز المضيف:</strong> لا يحتاج أي جهاز خارجي.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> أي راوتر MikroTik يعمل بـ RouterOS 6.x أو 7.x.</li>
+      <li><strong>البرامج:</strong> RouterOS فقط &mdash; سكربت ~25 سطر.</li>
+      <li><strong>خطوات التثبيت:</strong> إنشاء بوت Telegram &rarr; تعديل المتغيرات (TOKEN, CHATID, الواجهة، تعليق NAT) &rarr; نسخ السكربت إلى الراوتر &rarr; إنشاء Scheduler.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-no">لا</span></td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p><strong>متوافق جزئياً:</strong> يعمل فقط إذا كان Starlink يوفر IP عام حقيقي. معظم مستخدمي Starlink يحصلون على IP خاص (CGNAT) مما يجعل تحديثات NAT عديمة الفائدة. يحتاج تعديل السكربت ليقرأ IP العام من خدمة خارجية مثل ifconfig.me.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>سهل</td></tr>
+      <tr><td>التقييم العام</td><td><strong>3/10</strong> (محدود جداً في النطاق)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 4 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>4. RouterOS Scripts Collection</h2>
+    <a class="project-link" href="https://github.com/henriquesebastiao/routeros-scripts" target="_blank">https://github.com/henriquesebastiao/routeros-scripts</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>مجموعة من سكربتات الأتمتة المكتوبة بلغة RouterOS لتنفيذ مهام إدارية شائعة على أجهزة MikroTik. تشمل تحديث النظام التلقائي، مراقبة الواجهات، التحكم في عرض نطاق DHCP، إرسال تنبيهات عبر Telegram والبريد الإلكتروني، وغيرها. جميع السكربتات تعمل مباشرة على الراوتر بدون أي متطلبات خارجية. المشروع مرخص تحت MIT ومستهدف لمسؤولي الشبكات في البيئات الصغيرة والمتوسطة.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>تحديث تلقائي لـ RouterOS:</strong> فحص التحديثات، إشعار بالبريد، تثبيت وإعادة تشغيل تلقائي، ترقية Firmware.</li>
+      <li><strong>رسائل Telegram:</strong> إرسال حالة الجهاز (حرارة، جهد، تحميل CPU، وقت التشغيل)، إشعارات DHCP lease، تنبيهات محطة لاسلكية.</li>
+      <li><strong>مراقبة سرعة الربط:</strong> تحذير عبر Telegram عند انخفاض سرعة منفذ Ethernet عن الحد المحدد.</li>
+      <li><strong>تحكم بعرض نطاق DHCP:</strong> إنشاء/إزالة Simple Queue تلقائياً لكل عميل DHCP مع حدود قابلة للتخصيص.</li>
+      <li><strong>نسخ احتياطي بالبريد:</strong> إنشاء ملف .backup وإرساله كمرفق بريد إلكتروني.</li>
+      <li><strong>شهادة SSL ذاتية:</strong> إنشاء شهادة CA وشهادة خادم لـ WebFig على HTTPS.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <p><strong>لا توجد أوامر أو أزرار تفاعلية.</strong> جميع إشعارات Telegram أحادية الاتجاه (push notifications فقط).</p>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> صلاحيات read, write, policy, test, reboot حسب السكربت.</li>
+      <li><strong>على الجهاز المضيف:</strong> لا يحتاج أي جهاز خارجي &mdash; كل شيء يعمل على الراوتر.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> أي جهاز MikroTik RouterBOARD.</li>
+      <li><strong>البرامج:</strong> RouterOS فقط، وWinBox/WebFig للإدارة، وإعداد خادم SMTP للبريد.</li>
+      <li><strong>خطوات التثبيت:</strong> تحميل السكربتات &rarr; لصقها في System &rarr; Scripts &rarr; تعديل العناصر النائبة (bot token, chat ID, emails) &rarr; ربط سكربت DHCP بـ Lease Script &rarr; إنشاء Scheduler.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th><th>التفاصيل</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-no">لا</span></td><td>لا يوجد سكربت لحظر الأجهزة</td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-yes">نعم</span></td><td>سكربت dhcp-server-queue-script ينشئ Simple Queue لكل عميل DHCP تلقائياً (افتراضي 2M/5M)</td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-yes">نعم</span></td><td>سكربت dhcp-server-monitor يرسل إشعار Telegram عند كل منح/تحرير lease جديد</td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-partial">محدود</span></td><td>الـ Queues توفر حدوداً لكن بدون تقارير استهلاك مدمجة</td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-partial">غير مباشر</span></td><td>إعادة التشغيل ضمن عملية التحديث التلقائي فقط</td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p>يعمل بشكل طبيعي مع أي اتصال WAN بما فيها Starlink. السكربتات تعمل على جانب LAN وهي مستقلة عن مزود الخدمة. لا يوجد تكامل خاص بـ Starlink.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>متوسط</td></tr>
+      <tr><td>التقييم العام</td><td><strong>5.5/10</strong></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 5 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>5. luci-app-trafficctl</h2>
+    <a class="project-link" href="https://forum.openwrt.org/t/luci-app-trafficctl-per-device-traffic-monitoring-control-internet-wifi-block-shape-rate-limit-telegram-bot/250531" target="_blank">https://forum.openwrt.org/t/250531</a><br>
+    <a class="project-link" href="https://github.com/YusDyr/luci-app-trafficctl" target="_blank">https://github.com/YusDyr/luci-app-trafficctl</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>luci-app-trafficctl هو تطبيق LuCI متكامل لمراقبة والتحكم في حركة مرور كل جهاز على حدة على راوترات OpenWrt. وُلد المشروع من رغبة المؤلف في وجود طريقة موثوقة بضغطة واحدة لقطع الإنترنت عن أطفاله، وإحباطه من صعوبة القيام بذلك بشكل صحيح على OpenWrt. يوفر مراقبة فورية لكل جهاز مع رسوم بيانية حية، وحظر إنترنت/WiFi فوري، وتحديد سرعة (Rate Limit/Traffic Shaping)، وبوت Telegram تفاعلي كامل مع أزرار مضمّنة للتحكم عن بُعد. يدعم OpenWrt 21.02 حتى 25.12 والنسخ التطويرية.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>مراقبة فورية لكل جهاز:</strong> اتصالات نشطة، حالة TCP، عناوين IP الوجهة، سرعة الباندويث الحية.</li>
+      <li><strong>رسوم بيانية حية (Sparklines):</strong> رسوم متحركة تتحدث كل ثانيتين لكل جهاز مع نافذة منبثقة تفاعلية.</li>
+      <li><strong>حظر الإنترنت:</strong> قواعد Layer 3 مع إنهاء conntrack فوري &mdash; الجهاز يُقطع فوراً.</li>
+      <li><strong>حظر WiFi:</strong> عبر hostapd_cli &mdash; فصل الجهاز المستهدف فقط بدون إعادة تحميل WiFi.</li>
+      <li><strong>محدد السرعة (Policer):</strong> nftables/iptables limit rate &mdash; إسقاط الحزم فوق الحد فوراً.</li>
+      <li><strong>مشكّل الحركة (Shaper):</strong> tc/HTB + fq_codel لتنعيم الحركة بدلاً من إسقاطها.</li>
+      <li><strong>اكتشاف أجهزة جديدة:</strong> عبر ARP + DHCP + WiFi stations مع إشعار فوري عبر DHCP hotplug.</li>
+      <li><strong>بوت Telegram تفاعلي:</strong> أوامر وأزرار مضمّنة كاملة للتحكم عن بُعد.</li>
+      <li><strong>استمرارية عبر إعادة التشغيل:</strong> القواعد تنجو من إعادة التشغيل عبر hotplug restore.</li>
+      <li><strong>قوالب إشعار مخصصة:</strong> 17 متغيراً لقوالب إشعار الأجهزة الجديدة.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <ul>
+      <li><code>/start</code> و<code>/help</code> &mdash; المساعدة والبداية</li>
+      <li><code>/devices</code> &mdash; قائمة الأجهزة النشطة مع أزرار لكل جهاز</li>
+      <li><code>/status</code> &mdash; ملخص الأجهزة المحظورة/المحدودة</li>
+    </ul>
+    <p><strong>أزرار تفاعلية (Inline Buttons) لكل جهاز:</strong></p>
+    <ul>
+      <li>حظر/إلغاء حظر الإنترنت &mdash; حظر/إلغاء حظر WiFi</li>
+      <li>تحديد سرعة: 1M, 2M, 5M, 10M, 25M, 50M, 100M kbit/s</li>
+      <li>تشكيل حركة (Shaper): 1M, 2M, 5M, 10M, 25M, 50M, 100M kbit/s</li>
+      <li>إزالة التحديد/التشكيل &mdash; رجوع</li>
+    </ul>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> صلاحيات Root كاملة (nftables/iptables, tc/HTB, hostapd_cli, conntrack, rpcd ACL).</li>
+      <li><strong>على الجهاز المضيف:</strong> متصفح ويب أو تطبيق Telegram فقط.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> أي راوتر OpenWrt (MIPS/ARM/x86) بحد أدنى 64 ميجابايت RAM.</li>
+      <li><strong>البرامج:</strong> حزمة IPK/APK واحدة (luci-app-trafficctl)، مع تبعيات اختيارية: tc-full, iw-full, curl لكل الميزات.</li>
+      <li><strong>خطوات التثبيت:</strong> <code>opkg install luci-app-trafficctl.ipk</code> (أو apk) &rarr; ضبط bot_token وchat_id في إعدادات LuCI &rarr; اختبار الاتصال &rarr; حفظ.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th><th>التفاصيل</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-yes">نعم</span></td><td>حظر Layer 3 فوري مع flush conntrack + حظر WiFi عبر hostapd_cli</td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-yes">نعم</span></td><td>Rate Limiter (policer) + Traffic Shaper (tc/HTB) مع خيارات متعددة</td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-yes">نعم</span></td><td>3 مصادر: ARP + DHCP + WiFi stations مع hotplug فوري و17 متغير قالب</td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-yes">نعم</span></td><td>مراقبة فورية عبر conntrack مع sparklines حية ورسوم تفاعلية</td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-no">لا</span></td><td>لا يوجد أمر إعادة تشغيل في البوت أو LuCI</td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p>يعمل بشكل طبيعي مع Starlink كاتصال WAN لأنه يعمل على جانب LAN فقط. ملاحظة: متغير wan_ip في القوالب قد يظهر IP خاص (CGNAT) بدلاً من IP العام.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>سهل</td></tr>
+      <tr><td>التقييم العام</td><td><strong>8.5/10</strong></td></tr>
+    </table>
+    <div class="success-box"><strong>الأقوى في فئته:</strong> luci-app-trafficctl هو الأكثر شمولاً من حيث مراقبة الأجهزة والتحكم فيها عبر Telegram مع أزرار تفاعلية حقيقية. مثالي للتحكم الأبوي وإدارة الشبكات المنزلية.</div>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 6 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>6. MickroTikBot (Java)</h2>
+    <a class="project-link" href="https://github.com/skiftare/mickrotikbot" target="_blank">https://github.com/skiftare/mickrotikbot</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>MickroTikBot هو بوت Telegram مكتوب بلغة Java لإدارة راوتر MikroTik يبيع وصول VPN من نوع L2TP للمستخدمين. <strong>ليس أداة إدارة شبكة عامة</strong>، بل هو منصة VPN-as-a-Service مبنية فوق MikroTik CHR (Cloud Hosted Router). يقوم المستخدمون بالتسجيل عبر Telegram، إيداع عملة مشفرة (Stellar/XLM)، والحصول على بيانات اعتماد L2TP VPN. المشروع طُوّر كمشروع تعليمي لتعلم مبادئ البرمجة كائنية التوجه (OOP) في الجامعة.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>تسجيل المستخدمين:</strong> إنشاء حسابات VPN عبر Telegram.</li>
+      <li><strong>دفع عملة مشفرة:</strong> دمج مع شبكة Stellar (XLM) للدفع.</li>
+      <li><strong>إنشاء اتصالات L2TP:</strong> إنشاء بيانات اعتماد VPN تلقائياً على MikroTik CHR.</li>
+      <li><strong>ملف شخصي للمستخدم:</strong> رصيد، تاريخ الدفع، بيانات الاتصال.</li>
+      <li><strong>تكامل gRPC:</strong> اتصال بخادم RADIUS للمصادقة.</li>
+      <li><strong>قاعدة بيانات مشفرة:</strong> تخزين بيانات المستخدمين مع تشفير AES.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <p>أوامر تسجيل، دفع، عرض الرصيد، الحصول على بيانات VPN. لا توجد أزرار تفاعلية معروفة لإدارة الشبكة.</p>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> وصول MikroTik API كامل (username/password للـ CHR).</li>
+      <li><strong>على الجهاز المضيف:</strong> خادم Java (JDK)، قاعدة بيانات، خادم RADIUS.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> خادم (VPS/سحابي) لتشغيل Java + MikroTik CHR (Cloud Hosted Router) + خادم RADIUS.</li>
+      <li><strong>البرامج:</strong> Java JDK، IntelliJ IDEA، قاعدة بيانات، محفظة Stellar، gRPC.</li>
+      <li><strong>خطوات التثبيت:</strong> استنساخ المشروع &rarr; إنشاء ملف .env بالمتغيرات (11 متغير) &rarr; تشغيل خادم Java.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-no">لا</span></td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-no">لا</span></td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p>لا علاقة له بـ Starlink. يعمل مع MikroTik CHR على خادم سحابي ويتطلب IP عام.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>صعب</td></tr>
+      <tr><td>التقييم العام</td><td><strong>3/10</strong> (مشروع تعليمي متخصص في بيع VPN وليس أداة مراقبة شبكة)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 7 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>7. DroidNet Sentinel</h2>
+    <a class="project-link" href="https://github.com/kahz12/DroidNet-Sentinel" target="_blank">https://github.com/kahz12/DroidNet-Sentinel</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>DroidNet Sentinel هو مجموعة أدوات تدقيق لشبكات Wi-Fi تعمل بشكل مستقل على Android (عبر Termux) وLinux (Debian/Ubuntu/Kali). يكتشف الأجهزة النشطة على الشبكة المحلية، يبصم الخدمات المفتوحة عبر Nmap، يصنف مستوى المخاطر لكل جهاز، يبحث عن الثغرات المعروفة (CVEs)، يتتبع التغييرات بين عمليات المسح، ويمكنه اتخاذ إجراءات مضادة نشطة ضد الأجهزة غير الموثوقة. يوفر واجهة سطر أوامر (CLI) ولوحة تحكم ويب Flask.</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>اكتشاف الأجهزة:</strong> مسح ARP ping sweep مع fallback لأساليب اكتشاف متقدمة.</li>
+      <li><strong>مسح عميق:</strong> فحص المنافذ والتعرف على الإصدارات لكل جهاز (Nmap -sV).</li>
+      <li><strong>محرك تقييم المخاطر:</strong> تصنيف MINIMAL/LOW/MEDIUM/CRITICAL بناءً على المنافذ المكشوفة.</li>
+      <li><strong>تتبع التغييرات:</strong> رصد الأجهزة الجديدة والمختفية وتغيرات المنافذ بين عمليات المسح.</li>
+      <li><strong>البحث عن ثغرات:</strong> استعلام Exploit-DB محلي + NIST NVD API لآخر 120 يوماً.</li>
+      <li><strong>استجابة نشطة (ARP Cut):</strong> قطع الإنترنت عن الأجهزة غير الموثوقة عبر ARP spoofing.</li>
+      <li><strong>Deauth 802.11:</strong> إرسال إطارات deauth ضد عميل معين أو بث عام.</li>
+      <li><strong>لوحة تحكم ويب:</strong> واجهة Flask مصادق عليها مع سجل المسح وعرض الفروقات.</li>
+      <li><strong>وضع Daemon:</strong> مسح مستمر كل 5 دقائق في الخلفية.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <p><strong>لا توجد أوامر أو أزرار تفاعلية.</strong> إشعارات أحادية الاتجاه فقط (ملخص المسح + تنبيهات CVE) عبر متغيرات بيئة TELEGRAM_TOKEN وTELEGRAM_CHAT_ID.</p>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> لا يحتاج أي وصول للراوتر.</li>
+      <li><strong>على الجهاز المضيف:</strong> Root/Sudo لـ ARP spoofing وDeauth. Nmap, termux-api (Android), dsniff, scapy, aircrack-ng للهجمات.</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> هاتف Android مع Termux أو جهاز Linux. محول WiFi يدعم monitor mode للـ Deauth.</li>
+      <li><strong>البرامج:</strong> Python 3.10+, Nmap, Flask, Rich, Scapy اختيارياً.</li>
+      <li><strong>خطوات التثبيت (Android):</strong> <code>pkg install python nmap termux-api</code> &rarr; <code>git clone</code> &rarr; <code>pip install -r requirements.txt</code> &rarr; <code>python main.py</code></li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th><th>التفاصيل</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-yes">نعم</span></td><td>عبر ARP poisoning (Spoofer module) &mdash; Linux فقط مع root</td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-no">لا</span></td><td>قطع كامل فقط بدون تحديد سرعة</td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-yes">نعم</span></td><td>رصد الأجهزة الجديدة عبر diff engine مع إشعارات Telegram</td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-no">لا</span></td><td>لا يراقب استهلاك الباندويث</td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-no">لا</span></td><td>لا يتكامل مع إدارة الراوتر</td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p>يعمل كأداة تدقيق عامة على أي شبكة محلية بما فيها Starlink. لا يوجد تكامل خاص بـ Starlink (لا يمكنه قراءة إحصائيات الطبق أو التفاعل مع Starlink API).</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>متوسط</td></tr>
+      <tr><td>التقييم العام</td><td><strong>7.5/10</strong> (ممتاز كأداة تدقيق أمني لكنه ليس لوحة تحكم شبكة)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== PROJECT 8 ==================== -->
+<div class="project-section">
+  <div class="project-header">
+    <h2>8. NetAlertX</h2>
+    <a class="project-link" href="https://github.com/jokob-sk/NetAlertX" target="_blank">https://github.com/jokob-sk/NetAlertX</a>
+  </div>
+  <div class="project-body">
+
+    <h3>القسم الأول: وصف عام</h3>
+    <p>NetAlertX (سابقاً Pi.Alert) هو إطار عمل مفتوح المصدر لرؤية الشبكة وذكاء الأصول يعمل كمرجع حقيقة للشبكة (Network Source of Truth). يكتشف ويصنف ويراقب جميع الأجهزة على الشبكات المحلية والبعيدة، ويكشف الأجهزة الجديدة/غير المصرح بها، ويتتبع تغيرات حالة الاتصال، ويرسل إشعارات عبر أكثر من 80 خدمة. يعمل كحاوية Docker على أي نظام Linux، مع أكثر من 6,500 نجمة على GitHub ودعم نشط. مشروع ناضج ومناسب بشدة لبيئات Homelab وفرق IT ومزودي الخدمات المدارة (MSPs).</p>
+
+    <h3>القسم الثاني: الإمكانيات والميزات</h3>
+    <ul>
+      <li><strong>اكتشاف شامل:</strong> ARP-scan, Nmap, ICMP, DHCP leases, Pi-hole, UniFi, MikroTik, AsusWRT, Fritz!Box, OpenWRT, SNMP, OMADA.</li>
+      <li><strong>80+ خدمة إشعار:</strong> Telegram, NTFY, Pushover, Pushsafer, Email, MQTT, Webhooks, Apprise (Discord, Slack, Signal...).</li>
+      <li><strong>تكاملات واسعة:</strong> Home Assistant MQTT, REST API, GraphQL, Prometheus, MCP Server Bridge لـ AI.</li>
+      <li><strong>وحدات Workflow:</strong> أتمتة حوكمة IT مع محفزات وشروط AND/OR وإجراءات.</li>
+      <li><strong>مخطط طوبولوجيا الشبكة:</strong> خريطة شبكة بصرية مولّدة تلقائياً.</li>
+      <li><strong>لوحة NOC:</strong> شاشة جدار حائط لمراكز العمليات.</li>
+      <li><strong>مزامنة متعددة المواقع:</strong> Sync Nodes (PUSH/PULL) للمراقبة المركزية.</li>
+      <li><strong>إضافات نظام:</strong> WOL, اختبار سرعة الإنترنت، مراقبة IP العام، مراقبة المواقع، نسخ CSV.</li>
+      <li><strong>تصميم أمني:</strong> نظام ملفات للقراءة فقط، مستخدم غير root، قدرات Linux محدودة.</li>
+    </ul>
+    <h4>أزرار وأوامر Telegram:</h4>
+    <p><strong>لا توجد أوامر أو أزرار تفاعلية.</strong> إشعارات Telegram أحادية الاتجاه فقط (أجهزة جديدة، أجهزة غير متصلة، تغيرات IP). يمكن استخدام Webhook + n8n لبناء بوت تفاعلي مخصص.</p>
+
+    <h3>القسم الثالث: الصلاحيات المطلوبة</h3>
+    <ul>
+      <li><strong>على الراوتر:</strong> قراءة فقط (API/SSH/SNMP) لاستيراد بيانات الأجهزة من الراوتر.</li>
+      <li><strong>على الجهاز المضيف:</strong> Docker مع <code>--network=host</code> و CAP_NET_RAW لمسح ARP. يعمل كمستخدم غير root (UID 20211).</li>
+    </ul>
+
+    <h3>القسم الرابع: متطلبات التثبيت</h3>
+    <ul>
+      <li><strong>الأجهزة:</strong> أي جهاز يدعم Docker (Raspberry Pi, NAS, mini PC, VM) بحد أدنى 256 ميجابايت RAM.</li>
+      <li><strong>البرامج:</strong> Docker + Docker Compose (أساسي) أو Home Assistant (add-on).</li>
+      <li><strong>خطوات التثبيت:</strong> <code>docker run -d --network=host --restart=unless-stopped -v /local_data_dir:/data ghcr.io/netalertx/netalertx:latest</code> &rarr; الوصول عبر المتصفح على المنفذ 20211 &rarr; ضبط SCAN_SUBNETS &rarr; تفعيل الإضافات.</li>
+    </ul>
+
+    <h3>القسم الخامس: التحكم والإجراءات</h3>
+    <table>
+      <tr><th>الإجراء</th><th>النتيجة</th><th>التفاصيل</th></tr>
+      <tr><td>حظر الأجهزة</td><td><span class="badge-no">لا</span></td><td>أداة مراقبة فقط &mdash; لا يمكنها حظر أجهزة</td></tr>
+      <tr><td>تحديد السرعة</td><td><span class="badge-no">لا</span></td><td>لا يوجد إدارة QoS أو عرض نطاق</td></tr>
+      <tr><td>إشعار أجهزة جديدة</td><td><span class="badge-yes">نعم</span></td><td>الميزة الأساسية &mdash; كشف فوري عبر 80+ خدمة إشعار</td></tr>
+      <tr><td>مراقبة الباندويث</td><td><span class="badge-partial">محدود</span></td><td>اختبار سرعة الإنترنت فقط &mdash; لا مراقبة لكل جهاز</td></tr>
+      <tr><td>إعادة تشغيل الراوتر</td><td><span class="badge-no">لا</span></td><td>لا يتحكم بالراوتر &mdash; مراقبة فقط</td></tr>
+    </table>
+
+    <h3>القسم السادس: التوافق مع Starlink</h3>
+    <p>يعمل كمراقب سلبي على أي شبكة متصلة بـ Starlink. يكتشف طبق Starlink كجهاز عادي على الشبكة. لا يوجد تكامل مع Starlink gRPC API. يمكن بناء إضافة مخصصة لقراءة إحصائيات الطبق.</p>
+
+    <h3>القسم السابع: التقييم</h3>
+    <table>
+      <tr><th>المعيار</th><th>التقييم</th></tr>
+      <tr><td>سهولة الإعداد</td><td>سهل</td></tr>
+      <tr><td>التقييم العام</td><td><strong>8.5/10</strong> (الأقوى في الاكتشاف والمراقبة لكنه لا يتحكم في الأجهزة)</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== COMPARISON TABLE ==================== -->
+<div class="final-section">
+  <h2>جدول المقارنة النهائي</h2>
+  <div style="overflow-x: auto;">
+  <table class="comparison-table">
+    <tr>
+      <th>المشروع</th>
+      <th>النظام الأساسي</th>
+      <th>إشعار أجهزة جديدة</th>
+      <th>حظر الأجهزة</th>
+      <th>تحديد السرعة</th>
+      <th>مراقبة الباندويث</th>
+      <th>إعادة تشغيل الراوتر</th>
+      <th>أزرار Telegram</th>
+      <th>التوافق مع Starlink</th>
+      <th>سهولة الإعداد</th>
+    </tr>
+    <tr>
+      <td><strong>TLGRM Script</strong></td>
+      <td>MikroTik RouterOS</td>
+      <td><span class="badge-partial">محدود</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td>أوامر نصية فقط</td>
+      <td>عبر MikroTik + Bypass</td>
+      <td>متوسط</td>
+    </tr>
+    <tr>
+      <td><strong>luci-app-telemt</strong></td>
+      <td>OpenWrt</td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-partial">محدود</span></td>
+      <td><span class="badge-partial">محدود</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td>Inline Buttons كاملة</td>
+      <td>مشاكل CGNAT</td>
+      <td>متوسط</td>
+    </tr>
+    <tr>
+      <td><strong>Dynamic-IP-Tracker</strong></td>
+      <td>MikroTik RouterOS</td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td>لا يوجد</td>
+      <td>جزئي (IP عام فقط)</td>
+      <td>سهل</td>
+    </tr>
+    <tr>
+      <td><strong>RouterOS Scripts</strong></td>
+      <td>MikroTik RouterOS</td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-partial">محدود</span></td>
+      <td><span class="badge-partial">غير مباشر</span></td>
+      <td>لا يوجد (إشعارات فقط)</td>
+      <td>يعمل مع أي WAN</td>
+      <td>متوسط</td>
+    </tr>
+    <tr>
+      <td><strong>luci-app-trafficctl</strong></td>
+      <td>OpenWrt</td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td>Inline Buttons كاملة</td>
+      <td>يعمل على جانب LAN</td>
+      <td>سهل</td>
+    </tr>
+    <tr>
+      <td><strong>MickroTikBot</strong></td>
+      <td>Java + MikroTik CHR</td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td>أوامر تسجيل/دفع فقط</td>
+      <td>لا ينطبق</td>
+      <td>صعب</td>
+    </tr>
+    <tr>
+      <td><strong>DroidNet Sentinel</strong></td>
+      <td>Android/Linux</td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td>إشعارات فقط</td>
+      <td>يعمل على أي LAN</td>
+      <td>متوسط</td>
+    </tr>
+    <tr>
+      <td><strong>NetAlertX</strong></td>
+      <td>Docker (Linux)</td>
+      <td><span class="badge-yes">نعم</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td><span class="badge-partial">محدود</span></td>
+      <td><span class="badge-no">لا</span></td>
+      <td>إشعارات فقط</td>
+      <td>مراقب سلبي</td>
+      <td>سهل</td>
+    </tr>
+  </table>
+  </div>
+</div>
+
+<!-- ==================== FINAL QUESTIONS ==================== -->
+<div class="final-section">
+  <h2>الأسئلة الختامية والتوصيات</h2>
+
+  <h3>السؤال الأول: لشبكة Starlink التي تضم أكثر من 100 مستخدم، ما هو المشروع الذي تنصح به؟</h3>
+  <div class="highlight-box">
+    <p><strong>التوصية: مزيج من ثلاثة مشاريع للحصول على أفضل تغطية:</strong></p>
+    <p><strong>1. luci-app-trafficctl (التحكم الأساسي):</strong> هذا هو المشروع الأمثل لشبكة Starlink كبيرة. يعمل على راوتر OpenWrt خلف Starlink بوضع Bypass، ويوفر كل ما تحتاجه: حظر أجهزة (Layer 3 + WiFi)، تحديد سرعة لكل جهاز (Policer + Shaper)، مراقبة باندويث حية لكل جهاز، إشعارات فورية عند اتصال أجهزة جديدة عبر Telegram مع أزرار تفاعلية. يدعم OpenWrt على أجهزة قوية مثل Raspberry Pi 4/5 أو mini PCs التي تتحمل أكثر من 100 مستخدم بسهولة.</p>
+    <p><strong>2. NetAlertX (الاكتشاف والمراقبة المركزية):</strong> كمكمل على خادم منفصل (Raspberry Pi أو NAS)، يوفر اكتشافاً شاملاً للأصول، ومخطط طوبولوجيا للشبكة، ومزامنة متعددة المواقع، وإشعارات عبر 80+ خدمة، وواجهة NOC لشاشة العمليات. هذا مثالي لمراقبة الشبكة ككل وتوثيق كل جهاز متصل.</p>
+    <p><strong>3. DroidNet Sentinel (التدقيق الأمني الدوري):</strong> كأداة تدقيق أمني على هاتف Android أو جهاز Linux للفحص الدوري وتحديد الثغرات والأجهزة المشبوهة.</p>
+  </div>
+  <p>إذا كان يجب اختيار مشروع واحد فقط، فـ <strong>luci-app-trafficctl</strong> هو الخيار الأفضل لأنه يوفر التحكم الكامل في الأجهزة والسرعة مع واجهة Telegram تفاعلية حقيقية، وهو الأسهل إعداداً والأكثر شمولاً في فئة التحكم النشط.</p>
+
+  <h3>السؤال الثاني: ما هو راوتر Starlink Bypass Mode؟ وكيف يفعّل؟</h3>
+  <div class="highlight-box">
+    <p><strong>وضع Bypass Mode</strong> هو ميزة في راوتر Starlink تسمح بتعطيل وظائف الراوتر المدمجة (NAT، DHCP، WiFi) وتحويل طبق Starlink إلى مودم جسر (Bridge Modem) فقط. عند تفعيله، يتوقف راوتر Starlink عن العمل كراوتر ويصبح مجرد جسر يمرر عنوان IP العام مباشرة إلى الراوتر المتصل به عبر كابل Ethernet. هذا ضروري لمن يريد استخدام راوتر خاص به (مثل OpenWrt أو MikroTik) لإدارة الشبكة بشكل كامل.</p>
+    <p><strong>كيفية التفعيل:</strong></p>
+    <ul>
+      <li>الخطوة 1: افتح تطبيق Starlink على هاتفك.</li>
+      <li>الخطوة 2: اذهب إلى الإعدادات (Settings) &rarr; Advanced.</li>
+      <li>الخطوة 3: فعّل خيار <strong>Bypass Mode</strong>.</li>
+      <li>الخطوة 4: ستحصل على رسالة تحذيرية تؤكد أنك تفهم العواقب &mdash; اقبلها.</li>
+      <li>الخطوة 5: بعد التفعيل، لن يمكنك الوصول إلى راوتر Starlink إلا عبر العنوان <code>192.168.100.1</code> (أو <code>192.168.1.1</code> حسب النموذج).</li>
+      <li>الخطوة 6: صل راوترك الخاص (OpenWrt/MikroTik) بمنفذ WAN من طبق Starlink عبر كابل Ethernet.</li>
+      <li>الخطوة 7: اضبط منفذ WAN على راوترك للحصول على IP عبر DHCP من Starlink.</li>
+    </ul>
+    <div class="warning-box"><strong>تحذير مهم:</strong> عند تفعيل Bypass Mode، لن يعمل WiFi المدمج في Starlink بعد الآن. ستحتاج بالتأكيد إلى راوتر إضافي لتوفير WiFi وإدارة الشبكة. أيضاً، لن يكون تطبيق Starlink قادراً على عرض إحصائيات الشبكة بشكل طبيعي &mdash; ستحتاج للوصول عبر عنوان IP المحلي.</div>
+  </div>
+
+  <h3>السؤال الثالث: ما نوع الراوتر الإضافي الذي تحتاجه لتشغيل هذه المشاريع على Starlink؟</h3>
+  <div class="highlight-box">
+    <p>اختيار الراوتر الإضافي يعتمد على المشاريع التي ستستخدمها:</p>
+
+    <h4>بالنسبة لـ luci-app-trafficctl (التوصية الرئيسية):</h4>
+    <p>تحتاج راوتر OpenWrt بقوة معالجة كافية لأكثر من 100 مستخدم. الخيارات الموصى بها:</p>
+    <ul>
+      <li><strong>Raspberry Pi 4/5 مع OpenWrt:</strong> خيار اقتصادي وقوي. RPi 5 بـ 4-8 جيجابايت RAM يكفي لـ 100+ مستخدم بسهولة، مع دعم كامل لـ luci-app-trafficctl والتحكم في الحركة.</li>
+      <li><strong>FriendlyElec NanoPi R4S/R5S:</strong> مصمم خصيصاً كراوتر OpenWrt بمعالج ARM قوي وواجهتي شبكة Gigabit.</li>
+      <li><strong>mini PC (x86) مع OpenWrt:</strong> خيارات مثل Intel N100 mini PC توفر أداءً ممتازاً مع دعم كامل لـ SQM/QoS لتحسين أداء Starlink.</li>
+      <li><strong>راوترات OpenWrt التجارية:</strong> مثل Banana Pi BPI-R3 أو Dynalink DL-WRX36 مع ذاكرة كافية.</li>
+    </ul>
+
+    <h4>بالنسبة لمشاريع MikroTik (TLGRM, RouterOS Scripts):</h4>
+    <p>تحتاج راوتر MikroTik يدعم RouterOS v7. الخيارات:</p>
+    <ul>
+      <li><strong>hAP ax3 (C53UiG+5HPaxD2HPaxD):</strong> راوتر WiFi 6 حديث بسعر معقول.</li>
+      <li><strong>RB5009UG+S+IN:</strong> راوتر متقدم بـ 9 منافذ Gigabit + SFP+ 10G، مثالي للشبكات الكبيرة.</li>
+      <li><strong>CCR2004-1G-12S+2XS:</strong> راوتر من فئة Cloud Core للشبكات الكبيرة جداً.</li>
+    </ul>
+
+    <h4>الحد الأدنى من المواصفات لشبكة 100+ مستخدم:</h4>
+    <ul>
+      <li><strong>المعالج:</strong> ARM Cortex-A72 أو أفضل (أو Intel x86 مكافئ).</li>
+      <li><strong>RAM:</strong> 1 جيجابايت كحد أدنى، 2+ جيجابايت مفضل.</li>
+      <li><strong>التخزين:</strong> 16+ ميجابايت فلاش أو SD card.</li>
+      <li><strong>الشبكة:</strong> Gigabit Ethernet (منفذان على الأقل: WAN + LAN).</li>
+      <li><strong>WiFi:</strong> WiFi 6 مفضل (AX1800 أو أفضل) مع دعم نطاقين (2.4GHz + 5GHz).</li>
+    </ul>
+
+    <h4>مخطط التوصيل:</h4>
+    <p>طبق Starlink &rarr; (كابل Ethernet) &rarr; منفذ WAN على الراوتر الإضافي (OpenWrt/MikroTik) &rarr; أجهزة الشبكة عبر WiFi و/أو منافذ LAN. الراوتر الإضافي يدير DHCP، الجدار الناري، QoS، ويعمل عليه بوت Telegram أو سكربت المراقبة.</p>
+  </div>
+</div>
+
+</body>
+</html>
