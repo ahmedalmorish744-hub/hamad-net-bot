@@ -1,0 +1,15 @@
+[Unit]
+Description=Hamad Net Bot - Telegram Network Monitor
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/hamad-net-bot
+ExecStart=/opt/hamad-net-bot/venv/bin/python /opt/hamad-net-bot/bot.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
