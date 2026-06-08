@@ -208,7 +208,7 @@ class InternetMonitor:
             return True
 
     def _diagnose_outage(self, results: Dict) -> Dict:
-        """تشخيص سبب الانقطاع"""
+        """تشخيص سبب الانقطاع - مع وصف ثنائي اللغة"""
         gw_ok = results.get('gateway_reachable', False)
         dns_ok = results.get('dns_working', False)
         http_ok = results.get('http_working', False)
@@ -218,55 +218,62 @@ class InternetMonitor:
             return {
                 'type': 'local_network',
                 'description': 'انقطاع محلي: الراوتر/ال Gateway غير قابل للوصول - قد تكون مشكلة في الراوتر أو كابل الشبكة',
+                'description_en': 'Local outage: Router/Gateway unreachable — possible router issue or network cable problem',
                 'severity': 'critical',
             }
         elif not wan_ok:
             return {
                 'type': 'wan_down',
                 'description': 'واجهة WAN معطلة - انقطاع كابل الإنترنت أو مشكلة في مقدم الخدمة (ISP)',
+                'description_en': 'WAN interface down — internet cable disconnected or ISP issue',
                 'severity': 'critical',
             }
         elif not dns_ok and not http_ok:
             return {
                 'type': 'internet_down',
                 'description': 'لا يوجد اتصال إنترنت - مشكلة من مقدم الخدمة (ISP) أو Starlink',
+                'description_en': 'No internet connection — ISP outage or Starlink disconnection',
                 'severity': 'critical',
             }
         elif not dns_ok:
             return {
                 'type': 'dns_issue',
                 'description': 'مشكلة في DNS - الإنترنت يعمل لكن لا يمكن حل أسماء النطاقات',
+                'description_en': 'DNS issue — internet works but domain names cannot be resolved',
                 'severity': 'high',
             }
         elif not http_ok:
             return {
                 'type': 'partial_outage',
                 'description': 'اتصال جزئي - بعض الخدمات لا تعمل (قد يكون حجب أو مشكلة في بروكسي)',
+                'description_en': 'Partial outage — some services unavailable (possible blocking or proxy issue)',
                 'severity': 'medium',
             }
         elif results.get('latency', {}).get('google', -1) > 200:
             return {
                 'type': 'high_latency',
                 'description': 'اتصال بطيء جداً - تأخير مرتفع قد يكون بسبب ازدحام أو مشكلة في Starlink',
+                'description_en': 'Very slow connection — high latency possibly due to congestion or Starlink issue',
                 'severity': 'medium',
             }
         else:
             return {
                 'type': 'unknown',
                 'description': 'مشكلة غير محددة في الاتصال',
+                'description_en': 'Unidentified connection issue',
                 'severity': 'low',
             }
 
     def _determine_affected_area(self, results: Dict) -> str:
-        """تحديد المنطقة المتأثرة"""
+        """تحديد المنطقة المتأثرة - ثنائي اللغة"""
         if not results.get('gateway_reachable', False):
-            return 'الشبكة المحلية بالكامل'
+            return 'الشبكة المحلية بالكامل / Entire Local Network'
         elif not results.get('online', False):
-            return 'جميع المستخدمين - لا إنترنت'
+            return 'جميع المستخدمين - لا إنترنت / All Users — No Internet'
         elif not results.get('dns_working', False):
-            return 'جميع المستخدمين - DNS معطل'
+            return 'جميع المستخدمين - DNS معطل / All Users — DNS Down'
         else:
-            return 'بعض الخدمات'
+            return 'بعض الخدمات / Some Services'
 
     async def get_bandwidth_stats(self) -> Dict:
         """جلب إحصائيات الباندويث"""

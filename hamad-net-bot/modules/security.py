@@ -106,28 +106,28 @@ class SecurityMonitor:
         try:
             logs = await self.router.get_system_logs()
             
-            # أنماط محاولات الاختراق
+            # أنماط محاولات الاختراق - مع وصف ثنائي اللغة
             intrusion_patterns = [
-                (r'login failure', 'brute_force', 'محاولة تسجيل دخول فاشلة'),
-                (r'invalid password', 'brute_force', 'كلمة مرور خاطئة'),
-                (r'authentication failure', 'brute_force', 'فشل المصادقة'),
-                (r'login attempt', 'brute_force', 'محاولة تسجيل دخول'),
-                (r'port scan', 'port_scan', 'فحص منافذ'),
-                (r'denied', 'access_denied', 'وصول مرفوض'),
-                (r'firewall.*drop', 'firewall_drop', 'حظر جدار ناري'),
-                (r'connection.*refused', 'connection_refused', 'اتصال مرفوض'),
-                (r'suspicious', 'suspicious', 'نشاط مشبوه'),
-                (r'intrusion', 'intrusion', 'محاولة اختراق'),
-                (r'attack', 'attack', 'هجوم'),
-                (r'ddos', 'ddos', 'هجوم DDoS'),
-                (r'flood', 'flood', 'هجوم فيضاني'),
+                (r'login failure', 'brute_force', 'محاولة تسجيل دخول فاشلة', 'Failed login attempt'),
+                (r'invalid password', 'brute_force', 'كلمة مرور خاطئة', 'Invalid password'),
+                (r'authentication failure', 'brute_force', 'فشل المصادقة', 'Authentication failure'),
+                (r'login attempt', 'brute_force', 'محاولة تسجيل دخول', 'Login attempt'),
+                (r'port scan', 'port_scan', 'فحص منافذ', 'Port scan detected'),
+                (r'denied', 'access_denied', 'وصول مرفوض', 'Access denied'),
+                (r'firewall.*drop', 'firewall_drop', 'حظر جدار ناري', 'Firewall drop'),
+                (r'connection.*refused', 'connection_refused', 'اتصال مرفوض', 'Connection refused'),
+                (r'suspicious', 'suspicious', 'نشاط مشبوه', 'Suspicious activity'),
+                (r'intrusion', 'intrusion', 'محاولة اختراق', 'Intrusion attempt'),
+                (r'attack', 'attack', 'هجوم', 'Network attack'),
+                (r'ddos', 'ddos', 'هجوم DDoS', 'DDoS attack'),
+                (r'flood', 'flood', 'هجوم فيضاني', 'Flood attack'),
             ]
 
             for log in logs:
                 message = log.get('message', '').lower()
                 topics = log.get('topics', '').lower()
                 
-                for pattern, attack_type, description in intrusion_patterns:
+                for pattern, attack_type, desc_ar, desc_en in intrusion_patterns:
                     if re.search(pattern, message) or re.search(pattern, topics):
                         # استخراج IP المصدر
                         ip_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', message)
@@ -140,7 +140,8 @@ class SecurityMonitor:
                             'type': attack_type,
                             'source_ip': source_ip,
                             'source_mac': source_mac,
-                            'description': description,
+                            'description': desc_ar,
+                            'description_en': desc_en,
                             'log_message': log.get('message', ''),
                             'timestamp': log.get('time', ''),
                             'severity': 'critical' if attack_type in ['intrusion', 'attack', 'ddos'] else 'high',
