@@ -46,14 +46,15 @@ notifier: Optional[NotificationHandler] = None
 
 
 def is_authorized(update: Update) -> bool:
-    """التحقق من صلاحية المستخدم (أدمن أو مستخدم مصرح)"""
+    """التحقق من صلاحية المستخدم - فقط الأدمن المحدد يمكنه استخدام البوت"""
     chat_id = update.effective_chat.id if update.effective_chat else 0
     user_id = update.effective_user.id if update.effective_user else 0
-    # التحقق من chat_id أو user_id
+    # التحقق من chat_id أو user_id في قائمة المصرح لهم
     if chat_id in config.AUTHORIZED_CHAT_IDS or user_id in config.AUTHORIZED_CHAT_IDS:
         return True
-    if not config.AUTHORIZED_CHAT_IDS:
-        return True  # إذا لم يتم تحديد معرفات، يُسمح للجميع
+    # إذا لم يتم تحديد أي معرفات، يُسمح فقط بالأدمن
+    if config.ADMIN_ID and (chat_id == config.ADMIN_ID or user_id == config.ADMIN_ID):
+        return True
     return False
 
 
@@ -61,8 +62,10 @@ def is_admin(update: Update) -> bool:
     """التحقق من أن المستخدم هو الأدمن فقط"""
     chat_id = update.effective_chat.id if update.effective_chat else 0
     user_id = update.effective_user.id if update.effective_user else 0
+    if config.ADMIN_ID and (chat_id == config.ADMIN_ID or user_id == config.ADMIN_ID):
+        return True
     if not config.ADMIN_CHAT_IDS:
-        return True  # إذا لم يتم تحديد أدمن، الكل أدمن
+        return False  # إذا لم يتم تحديد أدمن، لا أحد أدمن (أكثر أماناً)
     return chat_id in config.ADMIN_CHAT_IDS or user_id in config.ADMIN_CHAT_IDS
 
 
