@@ -105,81 +105,122 @@ class MikroTikRouter(RouterBase):
 
     def __init__(self):
         self.api = None
+        self.connection = None
         self.connected = False
+        self._last_error = ""
 
     async def connect(self) -> bool:
+        """الاتصال براوتر MikroTik - يدعم routeros_api v0.21+"""
         try:
             import routeros_api
-            # طريقة الاتصال الصحيحة لمكتبة routeros_api
-            # المكتبة تستخدم: routeros_api.RouterOsApi(hostname).get_api() مع login منفصل
-            connection = routeros_api.RouterOsApi(
-                config.MIKROTIK_HOST
-            )
-            self.api = connection.get_api(
+        except ImportError:
+            self._last_error = "مكتبة routeros_api غير مثبتة! شغّل: pip install routeros_api"
+            logger.error(self._last_error)
+            self.connected = False
+            return False
+
+        # الطريقة 1: استخدام routeros_api.connect() - الأسهل والأكثر توافقاً
+        try:
+            logger.info(f"محاولة الاتصال بـ MikroTik {config.MIKROTIK_HOST}:{config.MIKROTIK_PORT} ...")
+            api = await asyncio.to_thread(
+                routeros_api.connect,
+                host=config.MIKROTIK_HOST,
                 username=config.MIKROTIK_USER,
                 password=config.MIKROTIK_PASSWORD,
                 port=config.MIKROTIK_PORT
             )
-            self.connection = connection
+            self.api = api
+            self.connection = api
             self.connected = True
-            logger.info("تم الاتصال براوتر MikroTik بنجاح")
+            self._last_error = ""
+            logger.info(f"تم الاتصال براوتر MikroTik بنجاح ({config.MIKROTIK_HOST}:{config.MIKROTIK_PORT})")
             return True
-        except TypeError:
-            # طريقة بديلة - بعض الإصدارات تستخدم طريقة مختلفة
-            try:
-                import routeros_api
-                connection = routeros_api.RouterOsApi(
-                    config.MIKROTIK_HOST,
-                    port=config.MIKROTIK_PORT
-                )
-                self.api = connection.get_api(
-                    username=config.MIKROTIK_USER,
-                    password=config.MIKROTIK_PASSWORD,
-                )
-                self.connection = connection
-                self.connected = True
-                logger.info("تم الاتصال براوتر MikroTik بنجاح (طريقة بديلة)")
-                return True
-            except Exception as e2:
-                logger.error(f"فشل الاتصال بـ MikroTik (بديل): {e2}")
-                # طريقة ثالثة - الإصدارات القديمة
-                try:
-                    import routeros_api
-                    self.connection = routeros_api.connect(
-                        host=config.MIKROTIK_HOST,
-                        username=config.MIKROTIK_USER,
-                        password=config.MIKROTIK_PASSWORD,
-                        port=config.MIKROTIK_PORT
-                    )
-                    self.api = self.connection.get_api() if hasattr(self.connection, 'get_api') else self.connection
-                    self.connected = True
-                    logger.info("تم الاتصال براوتر MikroTik بنجاح (طريقة ثالثة)")
-                    return True
-                except Exception as e3:
-                    logger.error(f"فشل الاتصال بـ MikroTik (ثالث): {e3}")
-                    self.connected = False
-                    return False
-        except Exception as e:
-            logger.error(f"فشل الاتصال بـ MikroTik: {e}")
-            self.connected = False
-            return False
+        except Exception as e1:
+            logger.warning(f"طريقة connect() فشلت: {e1}")
+
+        # الطريقة 2: استخدام RouterOsApiPool
+        try:
+            pool = routeros_api.RouterOsApiPool(
+                host=config.MIKROTIK_HOST,
+                username=config.MIKROTIK_USER,
+                password=config.MIKROTIK_PASSWORD,
+                port=config.MIKROTIK_PORT
+            )
+            api = await asyncio.to_thread(pool.get_api)
+            self.api = api
+            self.connection = pool
+            self.connected = True
+            self._last_error = ""
+            logger.info(f"تم الاتصال براوتر MikroTik بنجاح عبر Pool ({config.MIKROTIK_HOST}:{config.MIKROTIK_PORT})")
+            return True
+        except Exception as e2:
+            logger.warning(f"طريقة RouterOsApiPool فشلت: {e2}")
+
+        # جميع الطرق فشلت
+        self._last_error = str(e1) if 'e1' in dir() else "فشل الاتصال"
+        self.connected = False
+        logger.error(f"فشل الاتصال بـ MikroTik على {config.MIKROTIK_HOST}:{config.MIKROTIK_PORT}")
+        logger.error(f"الخطأ: {self._last_error}")
+        logger.error("تأكد من:")
+        logger.error("  1. الراوتر يعمل ومتصل بالشبكة")
+        logger.error("  2. API مفعّل في الراوتر: IP -> Services -> api")
+        logger.error("  3. المنفذ صحيح (الافتراضي 8728)")
+        logger.error("  4. اسم المستخدم وكلمة المرور صحيحان")
+        return False
 
     async def disconnect(self):
-        if self.api:
+        if self.connection:
             try:
-                self.api.close()
+                if hasattr(self.connection, 'disconnect'):
+                    await asyncio.to_thread(self.connection.disconnect)
+                elif hasattr(self.connection, 'close'):
+                    await asyncio.to_thread(self.connection.close)
             except:
                 pass
-            self.connected = False
+        self.connected = False
+        self.api = None
+        self.connection = None
+
+    async def _reconnect(self) -> bool:
+        """إعادة الاتصال بالراوتر"""
+        logger.info("محاولة إعادة الاتصال بالراوتر...")
+        await self.disconnect()
+        return await self.connect()
 
     def _ensure_connection(self):
         if not self.connected:
             raise ConnectionError("غير متصل بالراوتر")
 
+    async def _safe_call(self, func, *args, **kwargs):
+        """تنفيذ استدعاء API مع إعادة الاتصال التلقائية عند الفشل"""
+        try:
+            # استخدام run_in_executor للدوال المرتبطة بالكائنات
+            loop = asyncio.get_event_loop()
+            if args or kwargs:
+                return await loop.run_in_executor(None, lambda: func(*args, **kwargs))
+            else:
+                return await loop.run_in_executor(None, func)
+        except Exception as e:
+            # إذا كان خطأ اتصال، حاول إعادة الاتصال
+            error_str = str(e).lower()
+            if any(word in error_str for word in ['connection', 'socket', 'closed', 'broken pipe', 'reset', 'timed out']):
+                logger.warning(f"فقدان الاتصال، محاولة إعادة الاتصال: {e}")
+                reconnected = await self._reconnect()
+                if reconnected:
+                    try:
+                        loop = asyncio.get_event_loop()
+                        if args or kwargs:
+                            return await loop.run_in_executor(None, lambda: func(*args, **kwargs))
+                        else:
+                            return await loop.run_in_executor(None, func)
+                    except:
+                        pass
+            raise
+
     async def get_dhcp_leases(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            leases = self.api.get_resource('/ip/dhcp-server/lease').get()
+            leases = await self._safe_call(self.api.get_resource('/ip/dhcp-server/lease').get)
             return [{
                 'mac': l.get('mac-address', '').upper(),
                 'ip': l.get('address', ''),
@@ -195,7 +236,7 @@ class MikroTikRouter(RouterBase):
     async def get_arp_table(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            arp = self.api.get_resource('/ip/arp').get()
+            arp = await self._safe_call(self.api.get_resource('/ip/arp').get)
             return [{
                 'mac': a.get('mac-address', '').upper(),
                 'ip': a.get('address', ''),
@@ -209,7 +250,7 @@ class MikroTikRouter(RouterBase):
     async def get_interfaces(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            interfaces = self.api.get_resource('/interface').get()
+            interfaces = await self._safe_call(self.api.get_resource('/interface').get)
             return [{
                 'name': i.get('name', ''),
                 'type': i.get('type', ''),
@@ -228,7 +269,7 @@ class MikroTikRouter(RouterBase):
     async def get_interface_traffic(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            interfaces = self.api.get_resource('/interface').get()
+            interfaces = await self._safe_call(self.api.get_resource('/interface').get)
             result = []
             for i in interfaces:
                 if i.get('running') == 'true' and i.get('type') in ['ether', 'wlan', 'bridge', 'vlan']:
@@ -248,9 +289,9 @@ class MikroTikRouter(RouterBase):
     async def get_system_info(self) -> Dict:
         self._ensure_connection()
         try:
-            identity = self.api.get_resource('/system/identity').get()[0]
-            resource = self.api.get_resource('/system/resource').get()[0]
-            routerboard = self.api.get_resource('/system/routerboard').get()
+            identity = (await self._safe_call(self.api.get_resource('/system/identity').get))[0]
+            resource = (await self._safe_call(self.api.get_resource('/system/resource').get))[0]
+            routerboard = await self._safe_call(self.api.get_resource('/system/routerboard').get)
             
             info = {
                 'identity': identity.get('name', 'Unknown'),
@@ -278,7 +319,7 @@ class MikroTikRouter(RouterBase):
     async def get_firewall_rules(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            rules = self.api.get_resource('/ip/firewall/filter').get()
+            rules = await self._safe_call(self.api.get_resource('/ip/firewall/filter').get)
             return [{
                 'chain': r.get('chain', ''),
                 'action': r.get('action', ''),
@@ -299,14 +340,16 @@ class MikroTikRouter(RouterBase):
     async def block_device(self, mac: str, comment: str = "محظور بواسطة بوت حمد نت") -> bool:
         self._ensure_connection()
         try:
-            self.api.get_resource('/ip/firewall/filter').add(
+            await self._safe_call(
+                self.api.get_resource('/ip/firewall/filter').add,
                 chain='forward',
                 src_mac_address=mac,
                 action='drop',
                 comment=comment
             )
             # أيضاً إضافة لقائمة العناوين
-            self.api.get_resource('/ip/firewall/address-list').add(
+            await self._safe_call(
+                self.api.get_resource('/ip/firewall/address-list').add,
                 list='blocked_devices',
                 address=mac,
                 comment=comment
@@ -321,18 +364,20 @@ class MikroTikRouter(RouterBase):
         self._ensure_connection()
         try:
             # حذف قاعدة الجدار الناري
-            rules = self.api.get_resource('/ip/firewall/filter').get(
+            rules = await self._safe_call(
+                self.api.get_resource('/ip/firewall/filter').get,
                 **{'src-mac-address': mac}
             )
             for rule in rules:
-                self.api.get_resource('/ip/firewall/filter').remove(id=rule['id'])
+                await self._safe_call(self.api.get_resource('/ip/firewall/filter').remove, id=rule['id'])
 
             # حذف من قائمة العناوين
-            lists = self.api.get_resource('/ip/firewall/address-list').get(
+            lists = await self._safe_call(
+                self.api.get_resource('/ip/firewall/address-list').get,
                 **{'address': mac}
             )
             for item in lists:
-                self.api.get_resource('/ip/firewall/address-list').remove(id=item['id'])
+                await self._safe_call(self.api.get_resource('/ip/firewall/address-list').remove, id=item['id'])
 
             logger.info(f"تم إلغاء حظر الجهاز {mac}")
             return True
@@ -355,7 +400,7 @@ class MikroTikRouter(RouterBase):
     async def get_system_logs(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            logs = self.api.get_resource('/log').get()
+            logs = await self._safe_call(self.api.get_resource('/log').get)
             return [{
                 'time': l.get('time', ''),
                 'topics': l.get('topics', ''),
@@ -368,7 +413,7 @@ class MikroTikRouter(RouterBase):
     async def get_routing_table(self) -> List[Dict]:
         self._ensure_connection()
         try:
-            routes = self.api.get_resource('/ip/route').get()
+            routes = await self._safe_call(self.api.get_resource('/ip/route').get)
             return [{
                 'dst': r.get('dst-address', ''),
                 'gateway': r.get('gateway', ''),
@@ -383,7 +428,8 @@ class MikroTikRouter(RouterBase):
     async def ping(self, host: str, count: int = 4) -> Dict:
         self._ensure_connection()
         try:
-            result = self.api.get_resource('/ping').call(
+            result = await self._safe_call(
+                self.api.get_resource('/ping').call,
                 {'address': host, 'count': str(count)}
             )
             if result:
@@ -402,7 +448,7 @@ class MikroTikRouter(RouterBase):
     async def reboot(self) -> bool:
         self._ensure_connection()
         try:
-            self.api.get_resource('/system').call('reboot')
+            await self._safe_call(self.api.get_resource('/system').call, 'reboot')
             return True
         except Exception as e:
             logger.error(f"خطأ في إعادة التشغيل: {e}")
@@ -411,7 +457,7 @@ class MikroTikRouter(RouterBase):
     async def get_cpu_load(self) -> float:
         self._ensure_connection()
         try:
-            resource = self.api.get_resource('/system/resource').get()[0]
+            resource = (await self._safe_call(self.api.get_resource('/system/resource').get))[0]
             return float(resource.get('cpu-load', 0))
         except:
             return -1
@@ -419,7 +465,7 @@ class MikroTikRouter(RouterBase):
     async def get_memory_usage(self) -> Dict:
         self._ensure_connection()
         try:
-            resource = self.api.get_resource('/system/resource').get()[0]
+            resource = (await self._safe_call(self.api.get_resource('/system/resource').get))[0]
             total = int(resource.get('total-memory', 0))
             free = int(resource.get('free-memory', 0))
             used = total - free
@@ -435,7 +481,7 @@ class MikroTikRouter(RouterBase):
     async def get_uptime(self) -> str:
         self._ensure_connection()
         try:
-            resource = self.api.get_resource('/system/resource').get()[0]
+            resource = (await self._safe_call(self.api.get_resource('/system/resource').get))[0]
             return resource.get('uptime', 'غير معروف')
         except:
             return 'غير متصل'
@@ -446,7 +492,7 @@ class MikroTikRouter(RouterBase):
             params = {'mac-address': mac, 'address': ip}
             if hostname:
                 params['host-name'] = hostname
-            self.api.get_resource('/ip/dhcp-server/lease').add(**params)
+            await self._safe_call(self.api.get_resource('/ip/dhcp-server/lease').add, **params)
             return True
         except Exception as e:
             logger.error(f"خطأ في إضافة DHCP lease: {e}")
@@ -457,7 +503,8 @@ class MikroTikRouter(RouterBase):
         self._ensure_connection()
         try:
             # إنشاء Simple Queue
-            self.api.get_resource('/queue/simple').add(
+            await self._safe_call(
+                self.api.get_resource('/queue/simple').add,
                 name=f"limit_{ip}",
                 target=ip,
                 max_limit=f"{upload}/{download}"
@@ -471,11 +518,12 @@ class MikroTikRouter(RouterBase):
     async def remove_bandwidth_limit(self, ip: str) -> bool:
         self._ensure_connection()
         try:
-            queues = self.api.get_resource('/queue/simple').get(
+            queues = await self._safe_call(
+                self.api.get_resource('/queue/simple').get,
                 **{'target': ip}
             )
             for q in queues:
-                self.api.get_resource('/queue/simple').remove(id=q['id'])
+                await self._safe_call(self.api.get_resource('/queue/simple').remove, id=q['id'])
             logger.info(f"تم إزالة تحديد السرعة عن {ip}")
             return True
         except Exception as e:

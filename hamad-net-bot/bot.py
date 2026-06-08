@@ -161,6 +161,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/topusers - أكبر المستخدمين\n\n"
         "⚙️ <b>التحكم:</b>\n"
         "/router - معلومات الراوتر\n"
+        "/connect - إعادة الاتصال بالراوتر\n"
         "/reboot - إعادة تشغيل الراوتر\n"
         "/scan - فحص الشبكة الآن\n"
         "/limit [IP] [DL] [UL] - تحديد سرعة\n\n"
@@ -215,6 +216,12 @@ async def _send_dashboard(update_or_query, is_query: bool = False):
             )
         except:
             router_info = "\n\n🖥️ الراوتر: ⚠️ لا يمكن جلب المعلومات"
+    else:
+        error = router._last_error if router and hasattr(router, '_last_error') else ''
+        router_info = "\n\n🖥️ الراوتر: ❌ غير متصل"
+        if error:
+            router_info += f"\n   ⚠️ {error}"
+        router_info += "\n   💡 /connect لإعادة المحاولة"
 
     sec_status = sec_summary.get('status', 'غير معروف')
     sec_count = sec_summary.get('total_alerts', 0)
@@ -714,13 +721,64 @@ async def topusers_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # === أوامر التحكم ===
 
+async def connect_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """إعادة الاتصال بالراوتر"""
+    if not is_admin(update):
+        await update.message.reply_text("⛔ هذا الأمر للأدمن فقط.")
+        return
+
+    msg = await update.message.reply_text("🔄 جاري محاولة الاتصال بالراوتر...")
+
+    if router:
+        try:
+            connected = await router._reconnect()
+        except:
+            connected = await router.connect()
+    else:
+        router_obj = create_router()
+        connected = await router_obj.connect()
+        if connected:
+            global router
+            router = router_obj
+
+    if connected:
+        info = await router.get_system_info()
+        name = info.get('identity', 'غير معروف')
+        model = info.get('model', 'غير معروف')
+        await msg.edit_text(
+            f"✅ تم الاتصال بالراوتر بنجاح!\n\n"
+            f"📛 الاسم: {name}\n"
+            f"📦 الموديل: {model}\n"
+            f"🌐 العنوان: {config.MIKROTIK_HOST}:{config.MIKROTIK_PORT}",
+            parse_mode=ParseMode.HTML
+        )
+    else:
+        error = router._last_error if hasattr(router, '_last_error') else 'غير معروف'
+        await msg.edit_text(
+            f"❌ فشل الاتصال بالراوتر!\n\n"
+            f"⚠️ الخطأ: {error}\n\n"
+            f"تأكد من:\n"
+            f"1. الراوتر يعمل ومتصل بالشبكة\n"
+            f"2. API مفعّل: Winbox → IP → Services → api\n"
+            f"3. المنفذ صحيح (الافتراضي 8728)\n"
+            f"4. اسم المستخدم وكلمة المرور صحيحان\n"
+            f"5. جهازك على نفس الشبكة ({config.NETWORK_SUBNET})",
+            parse_mode=ParseMode.HTML
+        )
+
+
 async def router_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """معلومات الراوتر"""
     if not is_authorized(update):
         return
 
     if not router or not router.connected:
-        await update.message.reply_text("❌ غير متصل بالراوتر.")
+        error = router._last_error if router and hasattr(router, '_last_error') else ''
+        text = "❌ غير متصل بالراوتر."
+        if error:
+            text += f"\n\n⚠️ الخطأ: {error}"
+        text += "\n\n💡 استخدم /connect لإعادة المحاولة"
+        await update.message.reply_text(text)
         return
 
     try:
@@ -1019,9 +1077,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.HTML)
 
     elif data == "settings":
+        router_status = "✅ متصل" if router and router.connected else "❌ غير متصل"
         text = (
             "⚙️ <b>إعدادات بوت حمد نت</b>\n\n"
             f"📡 نوع الراوتر: {config.ROUTER_TYPE}\n"
+            f"🔗 حالة الاتصال: {router_status}\n"
             f"🌐 الشبكة: {config.NETWORK_SUBNET}\n"
             f"⏱️ فترة الفحص: {config.SCAN_INTERVAL} ثانية\n"
             f"🔒 حظر تلقائي: {'✅' if config.AUTO_BLOCK_INTRUSION else '❌'}\n"
@@ -1034,10 +1094,47 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"   تغييرات: {'✅' if config.ALERT_ON_CONFIG_CHANGE else '❌'}\n"
         )
         kb = [
+            [InlineKeyboardButton("🔗 إعادة الاتصال", callback_data="reconnect_router")],
             [InlineKeyboardButton("🔄 فحص الآن", callback_data="scan_now")],
             [InlineKeyboardButton("🏠 الرئيسية", callback_data="dashboard")],
         ]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode=ParseMode.HTML)
+
+    elif data == "reconnect_router":
+        await query.edit_message_text("🔄 جاري إعادة الاتصال بالراوتر...")
+        if router:
+            try:
+                connected = await router._reconnect()
+            except:
+                connected = await router.connect()
+        else:
+            from modules.router import create_router
+            new_router = create_router()
+            connected = await new_router.connect()
+            if connected:
+                router = new_router
+
+        if connected:
+            try:
+                info = await router.get_system_info()
+                await query.edit_message_text(
+                    f"✅ تم الاتصال بالراوتر!\n\n"
+                    f"📛 {info.get('identity', 'غير معروف')} - {info.get('model', 'غير معروف')}\n"
+                    f"🌐 {config.MIKROTIK_HOST}:{config.MIKROTIK_PORT}",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 الرئيسية", callback_data="dashboard")]]),
+                    parse_mode=ParseMode.HTML
+                )
+            except:
+                await query.edit_message_text(
+                    "✅ تم الاتصال بالراوتر!",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 الرئيسية", callback_data="dashboard")]])
+                )
+        else:
+            error = router._last_error if router and hasattr(router, '_last_error') else 'غير معروف'
+            await query.edit_message_text(
+                f"❌ فشل الاتصال!\n\n⚠️ {error}\n\n💡 تأكد إن API مفعّل في الراوتر:\nWinbox → IP → Services → api",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 إعادة المحاولة", callback_data="reconnect_router")], [InlineKeyboardButton("🏠 الرئيسية", callback_data="dashboard")]])
+            )
 
     elif data == "help":
         text = (
@@ -1513,6 +1610,7 @@ async def post_init(application: Application):
             BotCommand("scan", "🔍 فحص الشبكة"),
             BotCommand("alerts", "🔔 التنبيهات"),
             BotCommand("router", "🖥️ الراوتر"),
+            BotCommand("connect", "🔗 إعادة الاتصال"),
             BotCommand("help", "❓ المساعدة"),
         ]
         for chat_id in config.AUTHORIZED_CHAT_IDS:
@@ -1561,6 +1659,7 @@ def main():
     application.add_handler(CommandHandler("bandwidth", bandwidth_command))
     application.add_handler(CommandHandler("topusers", topusers_command))
     application.add_handler(CommandHandler("router", router_command))
+    application.add_handler(CommandHandler("connect", connect_command))
     application.add_handler(CommandHandler("reboot", reboot_command))
     application.add_handler(CommandHandler("scan", scan_command))
     application.add_handler(CommandHandler("limit", limit_command))
