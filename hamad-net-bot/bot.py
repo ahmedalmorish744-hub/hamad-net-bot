@@ -46,7 +46,7 @@ monitor: Optional[InternetMonitor] = None
 notifier: Optional[NotificationHandler] = None
 
 
-# القائمة المسموح بها - فقط هذا المستخدم يقدر يستخدم البوت
+# صاحب البوت - يُقرأ من متغيرات البيئة (لا تضع المعرف مباشرة في الكود)
 SOLE_OWNER_ID = int(os.getenv("SOLE_OWNER_ID", "0")) if os.getenv("SOLE_OWNER_ID", "") else 0
 
 

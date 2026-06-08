@@ -9,7 +9,10 @@ load_dotenv()
 # === إعدادات التليجرام ===
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
-# معرف الأدمن الرئيسي - له الصلاحية الكاملة الوحيدة
+# معرف صاحب البوت الرئيسي - له الصلاحية المطلقة (يُقرأ من متغيرات البيئة)
+SOLE_OWNER_ID = int(os.getenv("SOLE_OWNER_ID", "0")) if os.getenv("SOLE_OWNER_ID", "") else 0
+
+# معرف الأدمن الرئيسي - له الصلاحية الكاملة
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0")) if os.getenv("ADMIN_ID", "") else 0
 
 # مستخدمون مصرح لهم إضافيون (يمكنهم استخدام البوت لكن ليس صلاحيات الأدمن الكاملة)
