@@ -17,7 +17,8 @@ from telegram import (
 )
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
-    MessageHandler, filters, ContextTypes,
+    MessageHandler, TypeHandler, filters, ContextTypes,
+    ApplicationHandlerStop,
 )
 from telegram.constants import ParseMode
 
@@ -45,28 +46,56 @@ monitor: Optional[InternetMonitor] = None
 notifier: Optional[NotificationHandler] = None
 
 
+# القائمة المسموح بها - فقط هذا المستخدم يقدر يستخدم البوت
+SOLE_OWNER_ID = int(os.getenv("SOLE_OWNER_ID", "0")) if os.getenv("SOLE_OWNER_ID", "") else 0
+
+
 def is_authorized(update: Update) -> bool:
-    """التحقق من صلاحية المستخدم - فقط الأدمن المحدد يمكنه استخدام البوت"""
-    chat_id = update.effective_chat.id if update.effective_chat else 0
+    """التحقق من صلاحية المستخدم - فقط صاحب البوت يمكنه استخدامه"""
     user_id = update.effective_user.id if update.effective_user else 0
-    # التحقق من chat_id أو user_id في قائمة المصرح لهم
-    if chat_id in config.AUTHORIZED_CHAT_IDS or user_id in config.AUTHORIZED_CHAT_IDS:
+    chat_id = update.effective_chat.id if update.effective_chat else 0
+
+    # الأولوية: التحقق المباشر من صاحب البوت
+    if user_id == SOLE_OWNER_ID or chat_id == SOLE_OWNER_ID:
         return True
-    # إذا لم يتم تحديد أي معرفات، يُسمح فقط بالأدمن
+
+    # ثم التحقق من config (لو أضفنا مستخدمين إضافيين مستقبلاً)
     if config.ADMIN_ID and (chat_id == config.ADMIN_ID or user_id == config.ADMIN_ID):
         return True
+    if chat_id in config.AUTHORIZED_CHAT_IDS or user_id in config.AUTHORIZED_CHAT_IDS:
+        return True
+
+    # رفض أي شخص آخر
+    logger.warning(f"⛔ محاولة وصول غير مصرح: user_id={user_id}, chat_id={chat_id}")
     return False
 
 
 def is_admin(update: Update) -> bool:
     """التحقق من أن المستخدم هو الأدمن فقط"""
-    chat_id = update.effective_chat.id if update.effective_chat else 0
     user_id = update.effective_user.id if update.effective_user else 0
+    chat_id = update.effective_chat.id if update.effective_chat else 0
+
+    # فقط صاحب البوت أدمن
+    if user_id == SOLE_OWNER_ID or chat_id == SOLE_OWNER_ID:
+        return True
     if config.ADMIN_ID and (chat_id == config.ADMIN_ID or user_id == config.ADMIN_ID):
         return True
-    if not config.ADMIN_CHAT_IDS:
-        return False  # إذا لم يتم تحديد أدمن، لا أحد أدمن (أكثر أماناً)
-    return chat_id in config.ADMIN_CHAT_IDS or user_id in config.ADMIN_CHAT_IDS
+    return False
+
+
+async def auth_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """فلتر عالمي - يمنع أي شخص غير مصرح من استخدام البوت تماماً"""
+    if not is_authorized(update):
+        user_id = update.effective_user.id if update.effective_user else 0
+        chat_id = update.effective_chat.id if update.effective_chat else 0
+        logger.warning(f"⛔ حظر وصول: user_id={user_id}, chat_id={chat_id}")
+        # رسالة للشخص غير المصرح
+        if update.message:
+            await update.message.reply_text("⛔ هذا البوت خاص. غير مصرح لك باستخدامه.")
+        elif update.callback_query:
+            await update.callback_query.answer("⛔ غير مصرح", show_alert=True)
+        raise ApplicationHandlerStop
+    return True
 
 
 def get_emoji_status(is_online: bool) -> str:
@@ -1641,6 +1670,9 @@ def main():
     application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
 
     # تسجيل الأوامر
+    # فلتر عالمي: يمنع أي شخص غير مصرح قبل ما يوصل لأي أمر
+    application.add_handler(TypeHandler(Update, auth_guard), group=-1)
+
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("dashboard", dashboard_command))
