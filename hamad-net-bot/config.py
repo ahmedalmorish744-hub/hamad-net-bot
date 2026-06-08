@@ -8,9 +8,23 @@ load_dotenv()
 
 # === إعدادات التليجرام ===
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-AUTHORIZED_CHAT_IDS = [
-    int(x) for x in os.getenv("AUTHORIZED_CHAT_IDS", "").split(",") if x.strip()
+
+# معرف الأدمن الرئيسي - له الصلاحية الكاملة الوحيدة
+ADMIN_ID = int(os.getenv("ADMIN_ID", "0")) if os.getenv("ADMIN_ID", "") else 0
+
+# مستخدمون مصرح لهم إضافيون (يمكنهم استخدام البوت لكن ليس صلاحيات الأدمن الكاملة)
+AUTHORIZED_USERS = [
+    int(x) for x in os.getenv("AUTHORIZED_USERS", "").split(",") if x.strip()
 ]
+
+# جميع المعرفات المصرح لها (الأدمن + المستخدمون الإضافيون)
+AUTHORIZED_CHAT_IDS = []
+if ADMIN_ID:
+    AUTHORIZED_CHAT_IDS.append(ADMIN_ID)
+AUTHORIZED_CHAT_IDS.extend(AUTHORIZED_USERS)
+
+# معرفات الأدمن فقط (للأوامر الحساسة)
+ADMIN_CHAT_IDS = [ADMIN_ID] if ADMIN_ID else []
 
 # === إعدادات الراوتر الرئيسي ===
 ROUTER_TYPE = os.getenv("ROUTER_TYPE", "mikrotik")  # mikrotik أو openwrt

@@ -46,11 +46,24 @@ notifier: Optional[NotificationHandler] = None
 
 
 def is_authorized(update: Update) -> bool:
-    """التحقق من صلاحية المستخدم"""
+    """التحقق من صلاحية المستخدم (أدمن أو مستخدم مصرح)"""
     chat_id = update.effective_chat.id if update.effective_chat else 0
+    user_id = update.effective_user.id if update.effective_user else 0
+    # التحقق من chat_id أو user_id
+    if chat_id in config.AUTHORIZED_CHAT_IDS or user_id in config.AUTHORIZED_CHAT_IDS:
+        return True
     if not config.AUTHORIZED_CHAT_IDS:
         return True  # إذا لم يتم تحديد معرفات، يُسمح للجميع
-    return chat_id in config.AUTHORIZED_CHAT_IDS
+    return False
+
+
+def is_admin(update: Update) -> bool:
+    """التحقق من أن المستخدم هو الأدمن فقط"""
+    chat_id = update.effective_chat.id if update.effective_chat else 0
+    user_id = update.effective_user.id if update.effective_user else 0
+    if not config.ADMIN_CHAT_IDS:
+        return True  # إذا لم يتم تحديد أدمن، الكل أدمن
+    return chat_id in config.ADMIN_CHAT_IDS or user_id in config.ADMIN_CHAT_IDS
 
 
 def get_emoji_status(is_online: bool) -> str:
@@ -319,9 +332,6 @@ async def _send_devices_list(update, show_all: bool = True, online_only: bool = 
     text = f"<b>{title}</b> ({len(devices)} جهاز)\n\n"
     
     page_devices = devices[page * per_page:(page + 1) * per_page]
-    for i, d in enumerate(page * per_page + 1 + (i for i in range(len(page_devices))), 1):
-        pass  # Will be rewritten below
-
     for i, d in enumerate(page_devices, 1):
         status = "🟢" if d.get('is_online') else "🔴"
         auth = "✅" if d.get('is_authorized') else "⚠️"
@@ -453,8 +463,9 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """حظر جهاز /block MAC"""
-    if not is_authorized(update):
+    """حظر جهاز /block MAC - أدمن فقط"""
+    if not is_admin(update):
+        await update.message.reply_text("⛔ هذا الأمر للأدمن فقط.")
         return
 
     if not context.args:
@@ -475,8 +486,9 @@ async def block_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def unblock_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """إلغاء حظر جهاز /unblock MAC"""
-    if not is_authorized(update):
+    """إلغاء حظر جهاز /unblock MAC - أدمن فقط"""
+    if not is_admin(update):
+        await update.message.reply_text("⛔ هذا الأمر للأدمن فقط.")
         return
 
     if not context.args:
@@ -748,8 +760,9 @@ async def router_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def reboot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """إعادة تشغيل الراوتر"""
-    if not is_authorized(update):
+    """إعادة تشغيل الراوتر - أدمن فقط"""
+    if not is_admin(update):
+        await update.message.reply_text("⛔ هذا الأمر للأدمن فقط.")
         return
 
     keyboard = InlineKeyboardMarkup([
@@ -802,8 +815,9 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def limit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """تحديد سرعة جهاز /limit IP DL UL"""
-    if not is_authorized(update):
+    """تحديد سرعة جهاز /limit IP DL UL - أدمن فقط"""
+    if not is_admin(update):
+        await update.message.reply_text("⛔ هذا الأمر للأدمن فقط.")
         return
 
     if len(context.args) < 3:
@@ -1503,6 +1517,15 @@ async def post_init(application: Application):
                 await application.bot.set_my_commands(commands, BotCommandScopeChat(chat_id))
             except:
                 pass
+
+    # فحص أولي للشبكة بعد التشغيل مباشرة
+    try:
+        logger.info("🔍 جاري الفحص الأولي للشبكة...")
+        await scanner.full_scan()
+        await monitor.check_internet()
+        logger.info("✅ تم الفحص الأولي بنجاح")
+    except Exception as e:
+        logger.error(f"خطأ في الفحص الأولي: {e}")
 
     logger.info("🚀 بوت حمد نت جاهز للعمل!")
 

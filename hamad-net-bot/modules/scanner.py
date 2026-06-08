@@ -161,14 +161,17 @@ class NetworkScanner:
         return changes
 
     def _scan_local_arp(self) -> Dict[str, Dict]:
-        """فحص جدول ARP المحلي"""
+        """فحص جدول ARP المحلي - يدعم Linux و Android/Termux"""
         devices = {}
+        
+        # طريقة 1: arp -a (Linux/Termux)
         try:
             result = subprocess.run(
                 ['arp', '-a'],
                 capture_output=True, text=True, timeout=10
             )
             for line in result.stdout.strip().split('\n'):
+                # تنسيق Linux: ? (192.168.1.1) at AA:BB:CC:DD:EE:FF [ether] on wlan0
                 match = re.search(r'\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-fA-F:]+)', line)
                 if match:
                     ip = match.group(1)
@@ -179,11 +182,50 @@ class NetworkScanner:
                             'hostname': '', 'source': 'local_arp',
                         }
         except Exception as e:
-            logger.debug(f"فشل فحص ARP المحلي: {e}")
+            logger.debug(f"فشل فحص ARP المحلي (arp -a): {e}")
+        
+        # طريقة 2: قراءة /proc/net/arp مباشرة (Android/Termux)
+        if not devices:
+            try:
+                with open('/proc/net/arp', 'r') as f:
+                    for line in f.readlines()[1:]:  # تخطي السطر الأول (العناوين)
+                        parts = line.split()
+                        if len(parts) >= 6:
+                            ip = parts[0]
+                            mac = parts[3].upper()
+                            if mac != '00:00:00:00:00:00' and ':' in mac:
+                                devices[mac] = {
+                                    'mac': mac, 'ip': ip,
+                                    'hostname': '', 'source': 'proc_arp',
+                                }
+            except Exception as e:
+                logger.debug(f"فشل قراءة /proc/net/arp: {e}")
+        
+        # طريقة 3: ip neigh (بديل حديث)
+        if not devices:
+            try:
+                result = subprocess.run(
+                    ['ip', 'neigh', 'show'],
+                    capture_output=True, text=True, timeout=10
+                )
+                for line in result.stdout.strip().split('\n'):
+                    # 192.168.1.1 dev wlan0 lladdr AA:BB:CC:DD:EE:FF REACHABLE
+                    match = re.search(r'(\d+\.\d+\.\d+\.\d+).*lladdr\s+([0-9a-fA-F:]+)', line)
+                    if match:
+                        ip = match.group(1)
+                        mac = match.group(2).upper()
+                        if mac != '00:00:00:00:00:00':
+                            devices[mac] = {
+                                'mac': mac, 'ip': ip,
+                                'hostname': '', 'source': 'ip_neigh',
+                            }
+            except Exception as e:
+                logger.debug(f"فشل فحص ip neigh: {e}")
+        
         return devices
 
     async def _nmap_scan(self) -> Dict[str, Dict]:
-        """فحص الشبكة باستخدام nmap"""
+        """فحص الشبكة باستخدام nmap أو ping sweep كبديل"""
         devices = {}
         try:
             result = subprocess.run(
@@ -206,10 +248,54 @@ class NetworkScanner:
                     }
                     current_ip = None
         except FileNotFoundError:
-            logger.debug("nmap غير مثبت")
+            logger.debug("nmap غير مثبت - سيتم استخدام ping sweep كبديل")
+            devices = await self._ping_sweep()
         except Exception as e:
             logger.debug(f"فشل فحص nmap: {e}")
+            devices = await self._ping_sweep()
         return devices
+
+    async def _ping_sweep(self) -> Dict[str, Dict]:
+        """فحص الشبكة بـ ping sweep - يعمل على Termux بدون nmap"""
+        devices = {}
+        import ipaddress
+        try:
+            network = ipaddress.ip_network(config.NETWORK_SUBNET, strict=False)
+            # فحص جميع الأجهزة في الشبكة بالتوازي
+            ping_tasks = []
+            for host in network.hosts():
+                ping_tasks.append(self._ping_host(str(host)))
+            
+            # فحص على دفعات لتجنب الضغط
+            batch_size = 20
+            for i in range(0, len(ping_tasks), batch_size):
+                batch = ping_tasks[i:i + batch_size]
+                results = await asyncio.gather(*batch, return_exceptions=True)
+            
+            # بعد الـ ping، اقرأ ARP مرة أخرى
+            await asyncio.sleep(1)  # انتظار قليل لتحديث جدول ARP
+            
+            # إعادة قراءة ARP بعد الـ ping
+            arp_devices = self._scan_local_arp()
+            for mac, info in arp_devices.items():
+                if mac not in devices:
+                    devices[mac] = info
+                    
+        except Exception as e:
+            logger.error(f"خطأ في ping sweep: {e}")
+        
+        return devices
+
+    async def _ping_host(self, host: str) -> bool:
+        """فحص جهاز واحد بالـ ping"""
+        try:
+            result = subprocess.run(
+                ['ping', '-c', '1', '-W', '1', host],
+                capture_output=True, timeout=3
+            )
+            return result.returncode == 0
+        except:
+            return False
 
     def _guess_device_type(self, device: Dict) -> str:
         """تخمين نوع الجهاز"""

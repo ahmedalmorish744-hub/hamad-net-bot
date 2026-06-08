@@ -111,31 +111,54 @@ class MikroTikRouter(RouterBase):
         try:
             import routeros_api
             # طريقة الاتصال الصحيحة لمكتبة routeros_api
-            self.api = routeros_api.RouterOsApi(
-                config.MIKROTIK_HOST,
+            # المكتبة تستخدم: routeros_api.RouterOsApi(hostname).get_api() مع login منفصل
+            connection = routeros_api.RouterOsApi(
+                config.MIKROTIK_HOST
+            )
+            self.api = connection.get_api(
                 username=config.MIKROTIK_USER,
                 password=config.MIKROTIK_PASSWORD,
                 port=config.MIKROTIK_PORT
             )
-            self.connection = self.api.get_api()
+            self.connection = connection
             self.connected = True
             logger.info("تم الاتصال براوتر MikroTik بنجاح")
             return True
         except TypeError:
-            # إذا فشلت الطريقة الأولى، جرّب طريقة بديلة
+            # طريقة بديلة - بعض الإصدارات تستخدم طريقة مختلفة
             try:
                 import routeros_api
-                self.api = routeros_api.RouterOsApi(
-                    config.MIKROTIK_HOST
+                connection = routeros_api.RouterOsApi(
+                    config.MIKROTIK_HOST,
+                    port=config.MIKROTIK_PORT
                 )
-                self.connection = self.api.get_api()
+                self.api = connection.get_api(
+                    username=config.MIKROTIK_USER,
+                    password=config.MIKROTIK_PASSWORD,
+                )
+                self.connection = connection
                 self.connected = True
                 logger.info("تم الاتصال براوتر MikroTik بنجاح (طريقة بديلة)")
                 return True
             except Exception as e2:
                 logger.error(f"فشل الاتصال بـ MikroTik (بديل): {e2}")
-                self.connected = False
-                return False
+                # طريقة ثالثة - الإصدارات القديمة
+                try:
+                    import routeros_api
+                    self.connection = routeros_api.connect(
+                        host=config.MIKROTIK_HOST,
+                        username=config.MIKROTIK_USER,
+                        password=config.MIKROTIK_PASSWORD,
+                        port=config.MIKROTIK_PORT
+                    )
+                    self.api = self.connection.get_api() if hasattr(self.connection, 'get_api') else self.connection
+                    self.connected = True
+                    logger.info("تم الاتصال براوتر MikroTik بنجاح (طريقة ثالثة)")
+                    return True
+                except Exception as e3:
+                    logger.error(f"فشل الاتصال بـ MikroTik (ثالث): {e3}")
+                    self.connected = False
+                    return False
         except Exception as e:
             logger.error(f"فشل الاتصال بـ MikroTik: {e}")
             self.connected = False

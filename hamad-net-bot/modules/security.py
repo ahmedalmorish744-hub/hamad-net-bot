@@ -153,7 +153,7 @@ class SecurityMonitor:
                             severity='critical' if attack_type in ['intrusion', 'attack', 'ddos'] else 'high',
                             source_ip=source_ip,
                             source_mac=source_mac,
-                            description=f"{description}: {log.get('message', '')[:200]}",
+                            description=f"{desc_ar}: {log.get('message', '')[:200]}",
                         )
 
                         # حظر تلقائي إذا كان مفعلاً
