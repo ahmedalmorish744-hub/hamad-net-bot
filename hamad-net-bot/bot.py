@@ -1422,45 +1422,66 @@ async def post_init(application: Application):
     # إعداد المهام الدورية
     job_queue = application.job_queue
 
-    # فحص الشبكة
-    job_queue.run_repeating(
-        periodic_network_scan,
-        interval=config.SCAN_INTERVAL,
-        first=10,
-        name="network_scan",
-    )
+    if job_queue is None:
+        # إذا لم يكن JobQueue متاحاً، نستخدم asyncio كبديل
+        logger.warning("⚠️ JobQueue غير متوفر - سيتم استخدام المهام الدورية البديلة")
+        import asyncio
 
-    # فحص الإنترنت
-    job_queue.run_repeating(
-        periodic_internet_check,
-        interval=config.PING_INTERVAL,
-        first=5,
-        name="internet_check",
-    )
+        async def _periodic_task(coro_func, interval: int, first: int = 5):
+            """مهمة دورية بديلة باستخدام asyncio"""
+            await asyncio.sleep(first)
+            while True:
+                try:
+                    await coro_func(application)
+                except Exception as e:
+                    logger.error(f"خطأ في المهمة الدورية: {e}")
+                await asyncio.sleep(interval)
 
-    # الفحص الأمني
-    job_queue.run_repeating(
-        periodic_security_check,
-        interval=config.SECURITY_CHECK_INTERVAL,
-        first=30,
-        name="security_check",
-    )
+        asyncio.create_task(_periodic_task(periodic_network_scan, config.SCAN_INTERVAL, 10))
+        asyncio.create_task(_periodic_task(periodic_internet_check, config.PING_INTERVAL, 5))
+        asyncio.create_task(_periodic_task(periodic_security_check, config.SECURITY_CHECK_INTERVAL, 30))
+        asyncio.create_task(_periodic_task(periodic_bandwidth_monitor, config.BANDWIDTH_MONITOR_INTERVAL, 15))
+        asyncio.create_task(_periodic_task(periodic_cleanup, 3600, 60))
+    else:
+        # فحص الشبكة
+        job_queue.run_repeating(
+            periodic_network_scan,
+            interval=config.SCAN_INTERVAL,
+            first=10,
+            name="network_scan",
+        )
 
-    # مراقبة الباندويث
-    job_queue.run_repeating(
-        periodic_bandwidth_monitor,
-        interval=config.BANDWIDTH_MONITOR_INTERVAL,
-        first=15,
-        name="bandwidth_monitor",
-    )
+        # فحص الإنترنت
+        job_queue.run_repeating(
+            periodic_internet_check,
+            interval=config.PING_INTERVAL,
+            first=5,
+            name="internet_check",
+        )
 
-    # تنظيف
-    job_queue.run_repeating(
-        periodic_cleanup,
-        interval=3600,  # كل ساعة
-        first=60,
-        name="cleanup",
-    )
+        # الفحص الأمني
+        job_queue.run_repeating(
+            periodic_security_check,
+            interval=config.SECURITY_CHECK_INTERVAL,
+            first=30,
+            name="security_check",
+        )
+
+        # مراقبة الباندويث
+        job_queue.run_repeating(
+            periodic_bandwidth_monitor,
+            interval=config.BANDWIDTH_MONITOR_INTERVAL,
+            first=15,
+            name="bandwidth_monitor",
+        )
+
+        # تنظيف
+        job_queue.run_repeating(
+            periodic_cleanup,
+            interval=3600,  # كل ساعة
+            first=60,
+            name="cleanup",
+        )
 
     # تسجيل أوامر البوت
     if config.AUTHORIZED_CHAT_IDS:

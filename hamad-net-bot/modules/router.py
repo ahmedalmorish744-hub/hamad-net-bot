@@ -109,17 +109,33 @@ class MikroTikRouter(RouterBase):
 
     async def connect(self) -> bool:
         try:
-            from routeros_api import RouterOsApi
-            self.api = RouterOsApi(
+            import routeros_api
+            # طريقة الاتصال الصحيحة لمكتبة routeros_api
+            self.api = routeros_api.RouterOsApi(
                 config.MIKROTIK_HOST,
                 username=config.MIKROTIK_USER,
                 password=config.MIKROTIK_PASSWORD,
                 port=config.MIKROTIK_PORT
             )
-            self.api.connect()
+            self.connection = self.api.get_api()
             self.connected = True
             logger.info("تم الاتصال براوتر MikroTik بنجاح")
             return True
+        except TypeError:
+            # إذا فشلت الطريقة الأولى، جرّب طريقة بديلة
+            try:
+                import routeros_api
+                self.api = routeros_api.RouterOsApi(
+                    config.MIKROTIK_HOST
+                )
+                self.connection = self.api.get_api()
+                self.connected = True
+                logger.info("تم الاتصال براوتر MikroTik بنجاح (طريقة بديلة)")
+                return True
+            except Exception as e2:
+                logger.error(f"فشل الاتصال بـ MikroTik (بديل): {e2}")
+                self.connected = False
+                return False
         except Exception as e:
             logger.error(f"فشل الاتصال بـ MikroTik: {e}")
             self.connected = False
